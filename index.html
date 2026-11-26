@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Climb Check-In</title>
+
+  <!-- iOS Standalone PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Climb Check-In" />
+  <meta name="theme-color" content="#0b0b0c" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- Inline SVG App Icon for iOS Home Screen & Browser Tab -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230b0b0c'/%3E%3Crect x='14' y='14' width='152' height='152' rx='30' fill='none' stroke='%23242428' stroke-width='4'/%3E%3Cpath d='M44 126L78 62l22 36 16-24 20 52H44z' fill='none' stroke='%23f4f4f5' stroke-width='8' stroke-linejoin='round' stroke-linecap='round'/%3E%3Ccircle cx='126' cy='50' r='9' fill='%2310b981'/%3E%3C/svg%3E" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0b0c'/%3E%3Cpath d='M14 46L28 20l8 14 6-9 8 21H14z' fill='none' stroke='%23f4f4f5' stroke-width='3.5' stroke-linejoin='round' stroke-linecap='round'/%3E%3Ccircle cx='46' cy='18' r='4' fill='%2310b981'/%3E%3C/svg%3E" />
+
+  <!-- Inline Data-URI Web App Manifest -->
+  <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Climb%20Check-In%22%2C%22short_name%22%3A%22Climb%22%2C%22description%22%3A%22Minimalist%20ADHD-friendly%2C%20gout-safe%20bouldering%20and%20mobility%20check-in%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22orientation%22%3A%22portrait%22%2C%22background_color%22%3A%22%230b0b0c%22%2C%22theme_color%22%3A%22%230b0b0c%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%2520viewBox%3D'0%25200%2520512%2520512'%253E%253Crect%2520width%3D'512'%2520height%3D'512'%2520rx%3D'112'%2520fill%3D'%25230b0b0c'%2F%253E%253Cpath%2520d%3D'M120%2520360L220%2520172l64%2520104%252046-68%252062%2520152H120z'%2520fill%3D'none'%2520stroke%3D'%2523f4f4f5'%2520stroke-width%3D'22'%2520stroke-linejoin%3D'round'%2520stroke-linecap%3D'round'%2F%253E%253Ccircle%2520cx%3D'362'%2520cy%3D'142'%2520r%3D'26'%2520fill%3D'%252310b981'%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D" />
+
+  <!-- Fonts: Inter + JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+          },
+          colors: {
+            bg: '#0b0b0c',
+            card: '#141416',
+            border: '#242428',
+            ink: '#f4f4f5',
+            muted: '#a1a1aa',
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Safe-area padding for iOS notch and home indicator */
+    :root {
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body {
+      background-color: #0b0b0c;
+      color: #f4f4f5;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior-y: none;
+    }
+
+    body {
+      padding-top: max(16px, var(--sat));
+      padding-bottom: max(28px, var(--sab));
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Subtle custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0b0c;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #242428;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="font-sans bg-bg text-ink min-h-screen overflow-x-hidden selection:bg-zinc-700 selection:text-white">
+
+  <!-- Main Single-Column Container (Mobile-First, max 440px) -->
+  <main class="w-full max-w-[440px] mx-auto px-4 flex flex-col gap-3.5">
+
+    <!-- 1. MINIMAL HEADER -->
+    <header class="pt-1 pb-0.5 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between gap-2">
+        <!-- Day Preview Switcher & Date -->
+        <div class="flex items-center gap-1.5">
+          <button
+            id="prevDayBtn"
+            type="button"
+            aria-label="Previous day"
+            class="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center text-muted hover:text-ink hover:border-zinc-600 active:scale-95 transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          <div class="px-1.5">
+            <h1 id="headerDayName" class="text-[17px] font-semibold tracking-tight leading-tight text-ink">Today</h1>
+            <p id="headerDateStr" class="text-xs text-muted leading-tight mt-0.5">--</p>
+          </div>
+
+          <button
+            id="nextDayBtn"
+            type="button"
+            aria-label="Next day"
+            class="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center text-muted hover:text-ink hover:border-zinc-600 active:scale-95 transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Right Controls: Today Reset + Settings/Install Button -->
+        <div class="flex items-center gap-1.5">
+          <button
+            id="resetTodayBtn"
+            type="button"
+            class="hidden px-2.5 h-9 rounded-lg bg-zinc-800/90 border border-zinc-700 text-xs font-medium text-ink hover:bg-zinc-700 active:scale-95 transition"
+          >
+            Today
+          </button>
+          <button
+            id="openHelpBtn"
+            type="button"
+            aria-label="Settings and iPhone install"
+            class="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center text-muted hover:text-ink hover:border-zinc-600 active:scale-95 transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Guilt-Free Lifetime Counter Pill -->
+      <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-card border border-border">
+        <span class="text-xs text-muted">Total Days Shown Up</span>
+        <span id="daysShownUpCount" class="font-mono text-sm font-semibold text-ink tabular-nums">0</span>
+      </div>
+    </header>
+
+    <!-- 2. GOUT TRAFFIC LIGHT (1-TAP BIG TOE CHECK-IN) -->
+    <section id="goutCard" aria-label="Big Toe Gout Status" class="rounded-xl bg-card border border-border p-3.5 transition-colors">
+      <div class="flex items-center justify-between gap-2 mb-2.5">
+        <div class="flex items-center gap-2">
+          <span id="goutIndicatorDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-muted">Big Toe Check-In</h2>
+        </div>
+        <span id="goutStatusBadge" class="text-[11px] font-medium text-emerald-400">Clear</span>
+      </div>
+
+      <div class="grid grid-cols-3 gap-1.5 p-1 rounded-lg bg-bg border border-border" role="radiogroup" aria-label="Gout traffic light">
+        <button type="button" data-gout="green" class="gout-btn min-h-[40px] rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>Green</span>
+        </button>
+        <button type="button" data-gout="yellow" class="gout-btn min-h-[40px] rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+          <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+          <span>Yellow</span>
+        </button>
+        <button type="button" data-gout="red" class="gout-btn min-h-[40px] rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+          <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+          <span>Red</span>
+        </button>
+      </div>
+
+      <p id="goutGuidanceText" class="text-xs text-muted mt-2.5 leading-snug">
+        Full plan. Downclimb all gym boulders.
+      </p>
+    </section>
+
+    <!-- 3. ADHD LOW-ENERGY OVERRIDE (5-MIN FLOOR) -->
+    <section aria-label="Low-Energy Mode" class="rounded-xl bg-card border border-border px-3.5 py-3 flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <h2 class="text-sm font-medium text-ink leading-tight">Low-Energy Mode</h2>
+        <p class="text-xs text-muted mt-0.5 leading-snug">Shrinks today to a 5-min floor so you stay in motion.</p>
+      </div>
+      <button
+        id="lowEnergyToggle"
+        type="button"
+        role="switch"
+        aria-checked="false"
+        aria-label="Toggle Low-Energy Mode"
+        class="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border border-border bg-bg transition-colors focus:outline-none"
+      >
+        <span id="lowEnergyThumb" class="inline-block h-5 w-5 transform rounded-full bg-zinc-400 transition-transform translate-x-1"></span>
+      </button>
+    </section>
+
+    <!-- 4. TODAY'S PLAN SWITCHER & TASKS -->
+    <section aria-label="Today's Tasks" class="rounded-xl bg-card border border-border p-3.5">
+      <div class="flex items-center justify-between gap-2 mb-2.5">
+        <div class="flex items-center gap-2 min-w-0">
+          <h2 id="tasksSectionTitle" class="text-xs font-semibold uppercase tracking-wider text-muted truncate">Today's Plan</h2>
+          <span id="planOverrideBadge" class="hidden text-[10px] font-mono font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
+            Custom
+          </span>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button
+            id="resetPlanAutoBtn"
+            type="button"
+            class="hidden text-[11px] font-medium text-muted hover:text-ink underline underline-offset-2 transition"
+          >
+            Reset to Auto
+          </button>
+          <span id="tasksProgressBadge" class="font-mono text-xs text-muted tabular-nums">0/0</span>
+        </div>
+      </div>
+
+      <!-- 1-Tap Flexible Daily Plan Switcher -->
+      <div id="planSwitcherWrap" class="mb-3">
+        <div class="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Choose today's workout plan">
+          <button type="button" data-plan="auto" id="planAutoBtn" class="plan-btn min-h-[36px] px-2 rounded-lg border text-[11px] font-medium transition active:scale-[0.98] truncate">
+            Auto
+          </button>
+          <button type="button" data-plan="gym" class="plan-btn min-h-[36px] px-2 rounded-lg border text-[11px] font-medium transition active:scale-[0.98] truncate">
+            Climbing Gym
+          </button>
+          <button type="button" data-plan="strength_a" class="plan-btn min-h-[36px] px-2 rounded-lg border text-[11px] font-medium transition active:scale-[0.98] truncate">
+            Strength A
+          </button>
+          <button type="button" data-plan="strength_b" class="plan-btn min-h-[36px] px-2 rounded-lg border text-[11px] font-medium transition active:scale-[0.98] truncate">
+            Strength B
+          </button>
+          <button type="button" data-plan="prehab" class="plan-btn min-h-[36px] px-2 rounded-lg border text-[11px] font-medium transition active:scale-[0.98] truncate">
+            Prehab
+          </button>
+          <button type="button" data-plan="rest" class="plan-btn min-h-[36px] px-2 rounded-lg border text-[11px] font-medium transition active:scale-[0.98] truncate">
+            Rest &amp; Mob
+          </button>
+        </div>
+
+        <!-- Subtle Back-to-Back Tendon Recovery Tip -->
+        <p id="backToBackTip" class="hidden mt-2 px-2.5 py-2 rounded-lg bg-bg border border-amber-500/25 text-[11px] text-amber-300/90 leading-snug">
+          Heads up: back-to-back finger/gym loading — prioritize warm-up and listen to your pulleys/toe.
+        </p>
+      </div>
+
+      <div id="tasksList" class="flex flex-col gap-2">
+        <!-- Dynamically rendered task rows -->
+      </div>
+    </section>
+
+    <!-- 4B. WHAT'S NEXT? (RECOVERY & SEQUENCING GUIDE) -->
+    <section aria-label="Recovery and Next Day Plan Guide" class="rounded-xl bg-card border border-border p-3.5">
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-muted truncate">What's Next?</h2>
+          <span id="nextPlanToneBadge" class="text-[10px] font-mono font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+            Green Light
+          </span>
+        </div>
+        <button
+          id="toggleCheatSheetBtn"
+          type="button"
+          aria-expanded="false"
+          class="text-[11px] font-medium text-muted hover:text-ink underline underline-offset-2 shrink-0 transition"
+        >
+          All Rules
+        </button>
+      </div>
+
+      <!-- Context-Aware Recommendation for Tomorrow -->
+      <div class="rounded-lg bg-bg border border-border p-3 space-y-1.5">
+        <div class="flex flex-wrap items-center gap-1.5 text-xs">
+          <span class="text-muted">After</span>
+          <span id="nextPlanCurrentLabel" class="font-semibold text-ink">Climbing Gym</span>
+          <span class="text-zinc-500">→</span>
+          <span id="nextPlanRecommended" class="font-semibold text-emerald-400">Rest &amp; Mobility</span>
+        </div>
+        <p id="nextPlanGuidance" class="text-xs text-muted leading-relaxed">
+          --
+        </p>
+      </div>
+
+      <!-- Collapsible Full Sequencing Cheat Sheet -->
+      <div id="sequencingCheatSheet" class="hidden mt-2.5 pt-2.5 border-t border-border/70 space-y-2">
+        <!-- Dynamically rendered full rules list -->
+      </div>
+    </section>
+
+    <!-- 5. HYDRATION TRACKER (GOUT FLUSH: 3.0L GOAL) -->
+    <section aria-label="Hydration Tracker" class="rounded-xl bg-card border border-border p-3.5">
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-muted">Hydration (Gout Flush)</h2>
+        <div class="flex items-center gap-2.5">
+          <span id="waterReadout" class="font-mono text-xs font-semibold text-ink tabular-nums">0.00 / 3.00 L</span>
+          <button
+            id="waterResetBtn"
+            type="button"
+            class="text-[11px] text-muted hover:text-ink underline underline-offset-2 transition"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="w-full h-1.5 rounded-full bg-bg border border-border/60 overflow-hidden mb-3">
+        <div id="waterProgressBar" class="h-full bg-zinc-200 transition-all duration-300 rounded-full" style="width: 0%"></div>
+      </div>
+
+      <!-- Quick Add / Subtract Buttons -->
+      <div class="grid grid-cols-3 gap-2">
+        <button
+          id="sub250Btn"
+          type="button"
+          class="min-h-[40px] rounded-lg bg-bg border border-border text-xs font-mono font-medium text-muted hover:text-ink hover:border-zinc-600 active:scale-[0.98] transition"
+        >
+          -250 ml
+        </button>
+        <button
+          id="add250Btn"
+          type="button"
+          class="min-h-[40px] rounded-lg bg-bg border border-border text-xs font-mono font-medium text-ink hover:border-zinc-600 active:scale-[0.98] transition"
+        >
+          +250 ml
+        </button>
+        <button
+          id="add500Btn"
+          type="button"
+          class="min-h-[40px] rounded-lg bg-bg border border-border text-xs font-mono font-medium text-ink hover:border-zinc-600 active:scale-[0.98] transition"
+        >
+          +500 ml
+        </button>
+      </div>
+    </section>
+
+    <!-- 6. 20MM EDGE & REST TIMER -->
+    <section aria-label="20mm Edge Timer" class="rounded-xl bg-card border border-border p-3.5">
+      <div class="flex items-center justify-between gap-2 mb-2.5">
+        <div class="flex items-center gap-2">
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-muted">20mm Edge Timer</h2>
+          <span id="timerPresetTag" class="font-mono text-[11px] text-zinc-400">10s Hang</span>
+        </div>
+        <button
+          id="soundToggleBtn"
+          type="button"
+          class="px-2 py-1 rounded-md bg-bg border border-border text-[11px] font-medium text-muted hover:text-ink flex items-center gap-1 transition"
+        >
+          <span id="soundIcon">🔊</span>
+          <span id="soundLabel">Sound ON</span>
+        </button>
+      </div>
+
+      <!-- Preset Selector -->
+      <div class="grid grid-cols-4 gap-1.5 mb-3">
+        <button type="button" data-preset="hang10" class="preset-btn min-h-[38px] rounded-lg border text-xs font-mono font-medium transition active:scale-[0.97]">
+          10s
+        </button>
+        <button type="button" data-preset="rep73" class="preset-btn min-h-[38px] rounded-lg border text-xs font-mono font-medium transition active:scale-[0.97]">
+          7:3×6
+        </button>
+        <button type="button" data-preset="rest180" class="preset-btn min-h-[38px] rounded-lg border text-xs font-mono font-medium transition active:scale-[0.97]">
+          3m
+        </button>
+        <button type="button" data-preset="stretch60" class="preset-btn min-h-[38px] rounded-lg border text-xs font-mono font-medium transition active:scale-[0.97]">
+          60s
+        </button>
+      </div>
+
+      <!-- Large Monospace Display -->
+      <div class="rounded-lg bg-bg border border-border p-4 mb-3 flex flex-col items-center justify-center relative overflow-hidden">
+        <div class="flex items-center gap-2 mb-1">
+          <span id="timerPhaseBadge" class="text-[11px] font-mono font-semibold uppercase tracking-widest px-2 py-0.5 rounded bg-zinc-800 text-muted">
+            READY
+          </span>
+          <span id="timerRoundText" class="hidden text-[11px] font-mono text-muted tabular-nums">
+            Round 1/6
+          </span>
+        </div>
+
+        <div id="timerDisplay" class="font-mono text-5xl font-bold tracking-tight text-ink tabular-nums my-1">
+          00:10
+        </div>
+
+        <!-- Linear Progress Bar -->
+        <div class="w-full h-1 rounded-full bg-zinc-900 mt-2.5 overflow-hidden">
+          <div id="timerProgressBar" class="h-full bg-zinc-200 transition-all duration-100 rounded-full" style="width: 100%"></div>
+        </div>
+
+        <!-- Optional 1-Tap Jump to 3m Rest (shown after 10s Hang completes) -->
+        <button
+          id="jumpToRestBtn"
+          type="button"
+          class="hidden mt-3 px-3.5 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/35 text-xs font-mono font-semibold text-emerald-300 hover:bg-emerald-500/25 active:scale-[0.98] transition"
+        >
+          Start 3m Rest →
+        </button>
+      </div>
+
+      <!-- Start / Pause & Reset Controls -->
+      <div class="grid grid-cols-3 gap-2">
+        <button
+          id="timerStartPauseBtn"
+          type="button"
+          class="col-span-2 min-h-[44px] rounded-lg bg-ink text-bg text-sm font-semibold hover:bg-zinc-200 active:scale-[0.98] transition"
+        >
+          Start
+        </button>
+        <button
+          id="timerResetBtn"
+          type="button"
+          class="min-h-[44px] rounded-lg bg-bg border border-border text-sm font-medium text-muted hover:text-ink hover:border-zinc-600 active:scale-[0.98] transition"
+        >
+          Reset
+        </button>
+      </div>
+    </section>
+
+    <!-- 7. GUILT-FREE DAY COMPLETION -->
+    <section aria-label="Log Day Complete" class="pt-0.5 pb-4">
+      <button
+        id="logDayBtn"
+        type="button"
+        class="w-full min-h-[50px] rounded-xl border border-zinc-200 bg-ink text-bg font-semibold text-sm flex items-center justify-center gap-2 hover:bg-zinc-200 transition active:scale-[0.99]"
+      >
+        Log Today Complete
+      </button>
+      <p id="logDayHint" class="text-[11px] text-center text-muted mt-2">
+        No streaks. Every day you show up counts forever.
+      </p>
+    </section>
+
+  </main>
+
+  <!-- SETTINGS & IOS PWA INSTALL MODAL -->
+  <div
+    id="helpModal"
+    class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="helpModalTitle"
+  >
+    <div class="w-full max-w-[420px] rounded-2xl bg-card border border-border p-5 shadow-2xl max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-3.5">
+        <h3 id="helpModalTitle" class="text-base font-semibold text-ink">Settings &amp; Install</h3>
+        <button
+          id="closeHelpBtn"
+          type="button"
+          aria-label="Close modal"
+          class="w-8 h-8 rounded-lg bg-bg border border-border text-muted hover:text-ink flex items-center justify-center"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Modal Tab Switcher -->
+      <div class="grid grid-cols-2 gap-1.5 p-1 rounded-lg bg-bg border border-border mb-4" role="tablist">
+        <button
+          id="tabScheduleBtn"
+          type="button"
+          role="tab"
+          aria-selected="true"
+          class="min-h-[36px] rounded-md text-xs font-semibold transition"
+        >
+          Weekly Schedule
+        </button>
+        <button
+          id="tabInstallBtn"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          class="min-h-[36px] rounded-md text-xs font-medium transition"
+        >
+          Install on iPhone
+        </button>
+      </div>
+
+      <!-- TAB 1: DEFAULT WEEKLY SCHEDULE -->
+      <div id="tabSchedulePanel" class="space-y-3">
+        <p class="text-xs text-muted leading-relaxed">
+          Customize your default Mon–Sun schedule. You can assign multiple Climbing Gym days per week and still override any single day anytime.
+        </p>
+
+        <div id="weeklyScheduleList" class="space-y-2">
+          <!-- Dynamically rendered day selectors -->
+        </div>
+
+        <div class="flex items-center justify-between pt-2 border-t border-border/70">
+          <button
+            id="resetWeeklyDefaultsBtn"
+            type="button"
+            class="text-xs text-muted hover:text-ink underline underline-offset-2 transition"
+          >
+            Reset Defaults
+          </button>
+          <span id="scheduleSaveFeedback" class="text-[11px] text-emerald-400"></span>
+        </div>
+      </div>
+
+      <!-- TAB 2: INSTALL ON IPHONE (PWA) -->
+      <div id="tabInstallPanel" class="hidden space-y-3 text-xs text-muted leading-relaxed">
+        <p class="text-ink/90">
+          Host this single HTML file anywhere over HTTPS (GitHub Pages, Netlify, or Vercel) and install it permanently—it never expires like free Xcode builds.
+        </p>
+
+        <div class="rounded-lg bg-bg border border-border p-3 space-y-2">
+          <p class="font-semibold text-ink text-xs">Add to Home Screen (iOS Safari):</p>
+          <ol class="list-decimal list-inside space-y-1">
+            <li>Open your hosted link in <span class="text-ink font-medium">Safari</span> on iPhone.</li>
+            <li>Tap the <span class="text-ink font-medium">Share</span> icon (square with upward arrow).</li>
+            <li>Scroll down and tap <span class="text-ink font-medium">Add to Home Screen</span>.</li>
+            <li>Launch from the new icon for full-screen standalone mode.</li>
+          </ol>
+        </div>
+
+        <div class="rounded-lg bg-bg border border-border p-3 space-y-1.5">
+          <p class="font-semibold text-ink text-xs">ADHD Check-In Nudge Tip:</p>
+          <p>
+            In the iOS <span class="text-ink font-medium">Shortcuts</span> app, create two daily Personal Automations (e.g., 9:00 AM &amp; 6:30 PM) with the action <span class="text-ink font-mono">Open URL</span> pointing to your hosted page.
+          </p>
+        </div>
+
+        <div class="pt-1">
+          <p class="font-semibold text-ink text-xs mb-2">Standalone manifest.json (Optional for Hosting):</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              id="copyManifestBtn"
+              type="button"
+              class="min-h-[40px] rounded-lg bg-bg border border-border text-xs font-medium text-ink hover:border-zinc-500 active:scale-[0.98] transition"
+            >
+              Copy manifest.json
+            </button>
+            <button
+              id="downloadManifestBtn"
+              type="button"
+              class="min-h-[40px] rounded-lg bg-ink text-bg text-xs font-semibold hover:bg-zinc-200 active:scale-[0.98] transition"
+            >
+              Download .json
+            </button>
+          </div>
+          <p id="manifestFeedback" class="text-[11px] text-emerald-400 mt-1.5 h-4 text-center"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION LOGIC -->
+  <script>
+    (function () {
+      'use strict';
+
+      // =========================================================================
+      // 1. STORAGE LAYER (Safe localStorage wrapper with in-memory fallback)
+      // =========================================================================
+      const STORAGE_KEY = 'climb_checkin_v1';
+      let memoryFallback = null;
+
+      // Default Mon–Sun schedule (0 = Sun ... 6 = Sat)
+      const DEFAULT_WEEKLY_SCHEDULE = {
+        0: 'rest',
+        1: 'strength_a',
+        2: 'prehab',
+        3: 'strength_b',
+        4: 'rest',
+        5: 'prehab',
+        6: 'gym'
+      };
+
+      const PLAN_META = {
+        gym: { short: 'Gym', label: 'Climbing Gym', highIntensity: true },
+        strength_a: { short: 'Str A', label: 'Home Strength A', highIntensity: true },
+        strength_b: { short: 'Str B', label: 'Home Strength B', highIntensity: true },
+        prehab: { short: 'Prehab', label: 'Prehab & Antagonists', highIntensity: false },
+        rest: { short: 'Rest', label: 'Rest & Mobility', highIntensity: false }
+      };
+
+      // Recovery & sequencing rules: what to do the day after each plan
+      const NEXT_PLAN_GUIDE = {
+        gym: {
+          bestNext: 'Rest & Mobility (or Prehab)',
+          badgeText: 'Rest Needed',
+          badgeClass: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+          recClass: 'text-amber-300',
+          guidance: 'Rest is essential after hard bouldering. Give finger pulleys and your big toe 24–48h before max hangs or another limit session. If you climb again tomorrow, keep it light (V2–V3 technique, zero sharp jibs) and skip home hangs.'
+        },
+        strength_a: {
+          bestNext: 'Prehab or Rest & Mobility',
+          badgeText: '48h Fingers',
+          badgeClass: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+          recClass: 'text-amber-300',
+          guidance: 'Avoid 20mm hangs tomorrow so tendons can adapt. Prehab or Rest is ideal. You can visit the gym tomorrow if fingers feel fresh, but expect slightly lower peak power and skip micro-crimps.'
+        },
+        strength_b: {
+          bestNext: 'Rest & Mobility or Prehab',
+          badgeText: '48h Fingers',
+          badgeClass: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+          recClass: 'text-amber-300',
+          guidance: 'Take at least 1 rest or prehab day before limit bouldering at the gym or doing Strength A. Repeaters and lock-offs create deep tendon fatigue even if your muscles feel fine.'
+        },
+        prehab: {
+          bestNext: 'Climbing Gym, Strength A, or Strength B',
+          badgeText: 'Green Light',
+          badgeClass: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+          recClass: 'text-emerald-400',
+          guidance: 'Full green light to climb or strength train tomorrow. Prehab is low-fatigue and primes your shoulders, elbows, and antagonists for high-intensity sessions.'
+        },
+        rest: {
+          bestNext: 'Climbing Gym, Strength A, or Strength B',
+          badgeText: 'Green Light',
+          badgeClass: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+          recClass: 'text-emerald-400',
+          guidance: 'You are fully primed for hard climbing or home strength tomorrow (as long as your big toe check-in is Green or Yellow).'
+        },
+        low_energy: {
+          bestNext: 'Any Plan (Gym, Strength, or Prehab)',
+          badgeText: 'Green Light',
+          badgeClass: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+          recClass: 'text-emerald-400',
+          guidance: 'A 5-Min Floor day keeps momentum without adding fatigue—you are completely good to climb or strength train tomorrow.'
+        }
+      };
+
+      const STANDALONE_MANIFEST = JSON.stringify({
+        name: 'Climb Check-In',
+        short_name: 'Climb',
+        description: 'Minimalist ADHD-friendly, gout-safe bouldering and mobility check-in',
+        start_url: './',
+        display: 'standalone',
+        orientation: 'portrait',
+        background_color: '#0b0b0c',
+        theme_color: '#0b0b0c',
+        icons: [
+          {
+            src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%230b0b0c'/%3E%3Cpath d='M120 360L220 172l64 104 46-68 62 152H120z' fill='none' stroke='%23f4f4f5' stroke-width='22' stroke-linejoin='round' stroke-linecap='round'/%3E%3Ccircle cx='362' cy='142' r='26' fill='%2310b981'/%3E%3C/svg%3E",
+            sizes: '512x512',
+            type: 'image/svg+xml',
+            purpose: 'any maskable'
+          }
+        ]
+      }, null, 2);
+
+      function loadState() {
+        try {
+          const raw = window.localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            return {
+              loggedDates: Array.isArray(parsed.loggedDates) ? parsed.loggedDates : [],
+              days: parsed.days && typeof parsed.days === 'object' ? parsed.days : {},
+              weeklySchedule: parsed.weeklySchedule && typeof parsed.weeklySchedule === 'object'
+                ? { ...DEFAULT_WEEKLY_SCHEDULE, ...parsed.weeklySchedule }
+                : { ...DEFAULT_WEEKLY_SCHEDULE },
+              soundEnabled: typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : true
+            };
+          }
+        } catch (err) {
+          if (memoryFallback) return memoryFallback;
+        }
+        return {
+          loggedDates: [],
+          days: {},
+          weeklySchedule: { ...DEFAULT_WEEKLY_SCHEDULE },
+          soundEnabled: true
+        };
+      }
+
+      function saveState(state) {
+        memoryFallback = state;
+        try {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (err) {
+          // Gracefully degrade to in-memory state if storage is blocked
+        }
+      }
+
+      const appState = loadState();
+
+      // =========================================================================
+      // 2. DATE HELPERS
+      // =========================================================================
+      let dayOffset = 0; // 0 = Today, -1 = Yesterday, +1 = Tomorrow
+
+      function getActiveDateObj() {
+        const d = new Date();
+        d.setHours(12, 0, 0, 0); // Avoid DST boundary edge cases
+        d.setDate(d.getDate() + dayOffset);
+        return d;
+      }
+
+      function formatDateKey(dateObj) {
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const d = String(dateObj.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+
+      function getDayRecord(dateKey) {
+        if (!appState.days[dateKey]) {
+          appState.days[dateKey] = {
+            gout: 'green',
+            lowEnergy: false,
+            planOverride: 'auto',
+            loggedPlanType: null,
+            completedTasks: {},
+            waterMl: 0
+          };
+        } else {
+          // Ensure forward-compatibility with previously saved records
+          if (!appState.days[dateKey].planOverride) appState.days[dateKey].planOverride = 'auto';
+          if (typeof appState.days[dateKey].loggedPlanType === 'undefined') appState.days[dateKey].loggedPlanType = null;
+          if (!appState.days[dateKey].completedTasks) appState.days[dateKey].completedTasks = {};
+        }
+        return appState.days[dateKey];
+      }
+
+      function resolveEffectivePlan(weekday, record) {
+        if (record && record.planOverride && record.planOverride !== 'auto' && PLAN_META[record.planOverride]) {
+          return record.planOverride;
+        }
+        return appState.weeklySchedule[weekday] || DEFAULT_WEEKLY_SCHEDULE[weekday] || 'rest';
+      }
+
+      function shouldShowBackToBackTip(activeDateObj, activePlanType) {
+        if (!PLAN_META[activePlanType] || !PLAN_META[activePlanType].highIntensity) return false;
+
+        const prevDate = new Date(activeDateObj.getTime());
+        prevDate.setDate(prevDate.getDate() - 1);
+        const prevKey = formatDateKey(prevDate);
+
+        // Only trigger if yesterday was actually logged as completed
+        if (!appState.loggedDates.includes(prevKey)) return false;
+
+        const prevRecord = appState.days[prevKey];
+        const prevPlan = (prevRecord && prevRecord.loggedPlanType)
+          ? prevRecord.loggedPlanType
+          : resolveEffectivePlan(prevDate.getDay(), prevRecord || { planOverride: 'auto' });
+
+        return Boolean(PLAN_META[prevPlan] && PLAN_META[prevPlan].highIntensity);
+      }
+
+      // =========================================================================
+      // 3. GOUT TRAFFIC LIGHT & FLEXIBLE WORKOUT GENERATOR
+      // =========================================================================
+      const GOUT_CONFIG = {
+        green: {
+          label: 'Clear',
+          dotClass: 'bg-emerald-500',
+          badgeClass: 'text-emerald-400',
+          borderClass: 'border-emerald-500/35',
+          guidance: 'Full plan. Downclimb all gym boulders.'
+        },
+        yellow: {
+          label: 'Stiff / Ache',
+          dotClass: 'bg-amber-500',
+          badgeClass: 'text-amber-400',
+          borderClass: 'border-amber-500/40',
+          guidance: 'Seated foot work only. Overhangs & hooks, zero jibs.'
+        },
+        red: {
+          label: 'Active Flare',
+          dotClass: 'bg-rose-500',
+          badgeClass: 'text-rose-400',
+          borderClass: 'border-rose-500/45',
+          guidance: 'Rest & elevate foot. Skip gym and standing drops.'
+        }
+      };
+
+      function buildTasksForDay(planType, gout, lowEnergy) {
+        // Low-Energy Mode (ADHD 5-Min Floor)
+        if (lowEnergy) {
+          if (gout === 'red') {
+            return [
+              {
+                id: 'le_water',
+                title: 'Drink 500ml water',
+                meta: 'Gout flush · 1 min',
+                details: ['Sip a full 500ml glass right now to dilute uric acid and keep joints hydrated.']
+              },
+              {
+                id: 'le_glides',
+                title: 'Seated tendon glides (1 min)',
+                meta: 'Zero load · 1 min',
+                details: ['2×10 slow reps: Straight → Hook fist → Full fist → Tabletop → Straight.']
+              }
+            ];
+          }
+          return [
+            {
+              id: 'le_doming',
+              title: 'Seated Foot Doming (1×10)',
+              meta: 'Arch floor · 2 min',
+              details: ['Barefoot, seated. Slide ball of foot gently toward heel to lift arch without curling toes. Hold 5s each.']
+            },
+            {
+              id: 'le_hips',
+              title: '90/90 Hip Switches (2 min)',
+              meta: 'Mobility floor · 2 min',
+              details: ['Sit with knees bent at 90°. Smoothly rotate hips side to side to unlock turnout stiffness.']
+            },
+            {
+              id: 'le_water',
+              title: 'Drink 500ml water',
+              meta: 'Hydration · 1 min',
+              details: ['Hit your hydration baseline and call it a win.']
+            }
+          ];
+        }
+
+        // Standard Full Day Tasks based on Resolved Plan Type
+        const tasks = [];
+
+        switch (planType) {
+          case 'strength_a':
+            tasks.push({
+              id: 'plan_strength_a',
+              title: gout === 'red' ? 'Home Strength A (Seated/Safe Mod)' : 'Home Strength A — Max Hangs & Pulls',
+              meta: '50–60 min · High Intensity',
+              details: gout === 'red'
+                ? [
+                    'Active flare: Skip standing drops off the bar/edge.',
+                    'Substitute with seated/kneeling core & gentle forearm tendon glides if comfortable.'
+                  ]
+                : [
+                    'Warm-up (12m): Arm/wrist circles, 2×8 scap pull-ups, 4 progressive feet-on hangs.',
+                    '20mm Max Hangs (Half-crimp): 5×8–10s, 3 min rest. Step down gently onto chair.',
+                    'Heavy Pull-Ups: 4×3–5 reps (weighted backpack or L-sit/Archer), 3 min rest.',
+                    'Hanging Leg Raises (or Front Lever Tucks): 3×6–10 slow reps, 2 min rest.'
+                  ]
+            });
+            break;
+
+          case 'strength_b':
+            tasks.push({
+              id: 'plan_strength_b',
+              title: gout === 'red' ? 'Home Strength B (Floor Core Only)' : 'Home Strength B — Repeaters & Power',
+              meta: '50–60 min · High Intensity',
+              details: gout === 'red'
+                ? [
+                    'Active flare: Skip standing drops. Do Hollow Body Holds (3×40s) and floor Y-T-Ws only.'
+                  ]
+                : [
+                    '20mm Repeaters (7:3): 4 sets × 6 reps (7s hang / 3s rest) in Open or Half-crimp, 3m rest.',
+                    'Explosive Pull-Ups: 3×4–5 reps pulling fast chest-to-bar, 3m rest.',
+                    'Isometric 90° Lock-Offs: 3×10–15s, 2.5m rest. Step down softly.',
+                    'Core: 3 rounds of Copenhagen Planks (20–30s/side) + Hollow Body Holds (40s).'
+                  ]
+            });
+            break;
+
+          case 'prehab':
+            tasks.push({
+              id: 'plan_prehab',
+              title: 'Prehab & Antagonists Circuit',
+              meta: '25–30 min · 2–3 Rounds',
+              details: [
+                'Push-Ups (or Pike Push-Ups): 3×10–15 (knees down if big toe is sensitive).',
+                'Scapular Pull-Ups: 3×10 with straight elbows, 2s squeeze at top.',
+                'Prone Floor Y-T-Ws: 3×8 each letter for rotator cuff stability.',
+                'Eccentric Wrist Extensions: 3×15/arm (3–4s slow lower w/ 1–2kg weight).',
+                'Finger Extensor Openers (3×20) + Tendon Glides (2×10 slow).'
+              ]
+            });
+            break;
+
+          case 'gym':
+            if (gout === 'red') {
+              tasks.push({
+                id: 'plan_gym',
+                title: 'SKIP GYM: Rest & elevate foot',
+                meta: 'Flare Protocol · Zero Impact',
+                details: [
+                  'Do not climb during an active flare. Elevate foot, hydrate 3L+, and follow your doctor\'s medication plan.'
+                ]
+              });
+            } else if (gout === 'yellow') {
+              tasks.push({
+                id: 'plan_gym',
+                title: 'Climbing Gym (Yellow Mod)',
+                meta: 'Overhangs & hooks only · Zero jibs',
+                details: [
+                  'Warm-up: 8–10 easy boulders focusing on silent feet & hover hands.',
+                  'Overhangs, large footholds, smears, and heel hooks only — skip micro-edge jibs.',
+                  'Downclimb EVERY boulder. Slip shoes off between every attempt.'
+                ]
+              });
+            } else {
+              tasks.push({
+                id: 'plan_gym',
+                title: 'Climbing Gym — Limit Bouldering (V5–V6)',
+                meta: '90–120 min · 3–5m rests',
+                details: [
+                  'Warm-up (20m): 8–10 easy climbs (V0–V3) with silent feet & 2s hover hands.',
+                  'Limit Projecting (60m): 3–4 hard problems (V5–V7), 3–5 min full rest between tries.',
+                  'Weakness Finisher (15m): Worst style at V3–V4.',
+                  'Downclimb every boulder to protect the big toe from landing impact.'
+                ]
+              });
+            }
+            break;
+
+          case 'rest':
+          default:
+            tasks.push({
+              id: 'plan_rest',
+              title: 'Rest & Light Recovery',
+              meta: 'Hydration · Tendon Glides · Sleep',
+              details: [
+                'Tendon Glides: 2×10 slow reps through all 4 hand positions.',
+                'Hit 1.6–2.0g/kg low-purine protein (eggs, whey/dairy, tofu, poultry).',
+                gout === 'red' ? 'Keep foot elevated; skip walking.' : 'Optional easy walk + skin care (file calluses lightly, apply balm).'
+              ]
+            });
+            break;
+        }
+
+        // Daily Foot Arch Block (Adapted by Gout Traffic Light)
+        if (gout === 'green') {
+          tasks.push({
+            id: 'daily_foot',
+            title: 'Foot Arch Block (6 min)',
+            meta: 'Barefoot · Pain-free range',
+            details: [
+              'Foot Doming (Short-Foot): 3×10 reps, 5s hold (do not curl toes).',
+              'Toe Yoga: 3×10/foot (isolate big toe vs. 4 small toes).',
+              'Towel Scrunches: 2×30–45s/foot.',
+              'Controlled Heel Raises: 3×10–12 pressing evenly through toes 2–4, 3s lower.'
+            ]
+          });
+        } else if (gout === 'yellow') {
+          tasks.push({
+            id: 'daily_foot',
+            title: 'Foot Arch Block (Seated Only)',
+            meta: 'Zero standing load · 4 min',
+            details: [
+              'Seated Foot Doming: 3×10 reps, 5s hold.',
+              'Gentle Seated Toe Yoga: 3×10/foot within completely pain-free range.',
+              'Skip Towel Scrunches & standing Heel Raises today.'
+            ]
+          });
+        } else {
+          tasks.push({
+            id: 'daily_foot',
+            title: 'Foot Rest — Elevate & Hydrate',
+            meta: 'Zero foot loading',
+            details: [
+              'No foot exercises during an active flare. Elevate foot, aim for 3L+ water, and rest.'
+            ]
+          });
+        }
+
+        // Daily 15-Min Climbing Mobility Flow
+        tasks.push({
+          id: 'daily_mobility',
+          title: '15-Min Climbing Mobility Flow',
+          meta: 'Hips · Hamstrings · Shoulders',
+          details: gout === 'red'
+            ? [
+                'Floor-only modifications (no standing pressure on big toe):',
+                '90/90 Hip Switches (10 slow) · Frog Stretch w/ Rock-Backs (2×45–60s).',
+                'Thread the Needle (6/side) · Seated Hamstring Stretch.'
+              ]
+            : [
+                '90/90 Hip Switches: 10 slow switches (hip turnout).',
+                'Frog Stretch w/ Rock-Backs: 2×45–60s (adductors).',
+                'Deep Squat Hold (60s) + Cossack Squats (6/side) — weight anchored in heels/midfoot.',
+                'Elephant Walks: 20 reps/leg (hamstrings).',
+                'Thread the Needle: 6/side (thoracic spine).',
+                'Passive Dead Hang: 2×30–45s (shoulders; step down gently).'
+              ]
+        });
+
+        return tasks;
+      }
+
+      // =========================================================================
+      // 4. RENDERING & UI STATE BINDINGS
+      // =========================================================================
+      const expandedTaskIds = new Set();
+      let cheatSheetOpen = false;
+
+      const els = {
+        headerDayName: document.getElementById('headerDayName'),
+        headerDateStr: document.getElementById('headerDateStr'),
+        prevDayBtn: document.getElementById('prevDayBtn'),
+        nextDayBtn: document.getElementById('nextDayBtn'),
+        resetTodayBtn: document.getElementById('resetTodayBtn'),
+        daysShownUpCount: document.getElementById('daysShownUpCount'),
+
+        goutCard: document.getElementById('goutCard'),
+        goutIndicatorDot: document.getElementById('goutIndicatorDot'),
+        goutStatusBadge: document.getElementById('goutStatusBadge'),
+        goutGuidanceText: document.getElementById('goutGuidanceText'),
+        goutBtns: document.querySelectorAll('.gout-btn'),
+
+        lowEnergyToggle: document.getElementById('lowEnergyToggle'),
+        lowEnergyThumb: document.getElementById('lowEnergyThumb'),
+
+        tasksSectionTitle: document.getElementById('tasksSectionTitle'),
+        planOverrideBadge: document.getElementById('planOverrideBadge'),
+        resetPlanAutoBtn: document.getElementById('resetPlanAutoBtn'),
+        planSwitcherWrap: document.getElementById('planSwitcherWrap'),
+        planAutoBtn: document.getElementById('planAutoBtn'),
+        planBtns: document.querySelectorAll('.plan-btn'),
+        backToBackTip: document.getElementById('backToBackTip'),
+        tasksProgressBadge: document.getElementById('tasksProgressBadge'),
+        tasksList: document.getElementById('tasksList'),
+
+        nextPlanToneBadge: document.getElementById('nextPlanToneBadge'),
+        toggleCheatSheetBtn: document.getElementById('toggleCheatSheetBtn'),
+        nextPlanCurrentLabel: document.getElementById('nextPlanCurrentLabel'),
+        nextPlanRecommended: document.getElementById('nextPlanRecommended'),
+        nextPlanGuidance: document.getElementById('nextPlanGuidance'),
+        sequencingCheatSheet: document.getElementById('sequencingCheatSheet'),
+
+        waterReadout: document.getElementById('waterReadout'),
+        waterProgressBar: document.getElementById('waterProgressBar'),
+        sub250Btn: document.getElementById('sub250Btn'),
+        add250Btn: document.getElementById('add250Btn'),
+        add500Btn: document.getElementById('add500Btn'),
+        waterResetBtn: document.getElementById('waterResetBtn'),
+
+        logDayBtn: document.getElementById('logDayBtn'),
+        logDayHint: document.getElementById('logDayHint'),
+
+        openHelpBtn: document.getElementById('openHelpBtn'),
+        closeHelpBtn: document.getElementById('closeHelpBtn'),
+        helpModal: document.getElementById('helpModal'),
+        tabScheduleBtn: document.getElementById('tabScheduleBtn'),
+        tabInstallBtn: document.getElementById('tabInstallBtn'),
+        tabSchedulePanel: document.getElementById('tabSchedulePanel'),
+        tabInstallPanel: document.getElementById('tabInstallPanel'),
+        weeklyScheduleList: document.getElementById('weeklyScheduleList'),
+        resetWeeklyDefaultsBtn: document.getElementById('resetWeeklyDefaultsBtn'),
+        scheduleSaveFeedback: document.getElementById('scheduleSaveFeedback'),
+        copyManifestBtn: document.getElementById('copyManifestBtn'),
+        downloadManifestBtn: document.getElementById('downloadManifestBtn'),
+        manifestFeedback: document.getElementById('manifestFeedback')
+      };
+
+      function renderAll() {
+        const dateObj = getActiveDateObj();
+        const dateKey = formatDateKey(dateObj);
+        const weekday = dateObj.getDay();
+        const record = getDayRecord(dateKey);
+
+        // 1. Header
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const dayLabel = dayNames[weekday];
+        const dateFormatted = `${monthNames[dateObj.getMonth()]} ${dateObj.getDate()}, ${dateObj.getFullYear()}`;
+
+        els.headerDayName.textContent = dayOffset === 0 ? `${dayLabel} (Today)` : dayLabel;
+        els.headerDateStr.textContent = dateFormatted;
+        els.resetTodayBtn.classList.toggle('hidden', dayOffset === 0);
+        els.daysShownUpCount.textContent = String(appState.loggedDates.length);
+
+        // 2. Gout Traffic Light
+        const gCfg = GOUT_CONFIG[record.gout] || GOUT_CONFIG.green;
+        els.goutIndicatorDot.className = `w-2 h-2 rounded-full ${gCfg.dotClass}`;
+        els.goutStatusBadge.textContent = gCfg.label;
+        els.goutStatusBadge.className = `text-[11px] font-medium ${gCfg.badgeClass}`;
+        els.goutGuidanceText.textContent = gCfg.guidance;
+        els.goutCard.className = `rounded-xl bg-card border p-3.5 transition-colors ${gCfg.borderClass}`;
+
+        els.goutBtns.forEach((btn) => {
+          const val = btn.getAttribute('data-gout');
+          const active = val === record.gout;
+          btn.setAttribute('aria-checked', String(active));
+          if (active) {
+            btn.className = 'gout-btn min-h-[40px] rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 bg-zinc-800 text-ink border border-zinc-600/80 shadow-sm transition';
+          } else {
+            btn.className = 'gout-btn min-h-[40px] rounded-md text-xs font-medium flex items-center justify-center gap-1.5 text-muted hover:text-ink border border-transparent transition';
+          }
+        });
+
+        // 3. Low-Energy Mode Toggle
+        els.lowEnergyToggle.setAttribute('aria-checked', String(record.lowEnergy));
+        if (record.lowEnergy) {
+          els.lowEnergyToggle.className = 'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border border-emerald-500/50 bg-emerald-500/20 transition-colors focus:outline-none';
+          els.lowEnergyThumb.className = 'inline-block h-5 w-5 transform rounded-full bg-emerald-400 transition-transform translate-x-6';
+        } else {
+          els.lowEnergyToggle.className = 'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border border-border bg-bg transition-colors focus:outline-none';
+          els.lowEnergyThumb.className = 'inline-block h-5 w-5 transform rounded-full bg-zinc-400 transition-transform translate-x-1';
+        }
+
+        // 4. Plan Switcher & Tasks List
+        const defaultPlanForWeekday = appState.weeklySchedule[weekday] || DEFAULT_WEEKLY_SCHEDULE[weekday] || 'rest';
+        const effectivePlan = resolveEffectivePlan(weekday, record);
+        const isOverridden = record.planOverride && record.planOverride !== 'auto';
+
+        els.planAutoBtn.textContent = `Auto (${PLAN_META[defaultPlanForWeekday].short})`;
+        els.planOverrideBadge.classList.toggle('hidden', !isOverridden || record.lowEnergy);
+        els.resetPlanAutoBtn.classList.toggle('hidden', !isOverridden || record.lowEnergy);
+        els.planSwitcherWrap.classList.toggle('hidden', record.lowEnergy);
+
+        els.planBtns.forEach((btn) => {
+          const val = btn.getAttribute('data-plan');
+          const active = val === (record.planOverride || 'auto');
+          btn.setAttribute('aria-checked', String(active));
+          btn.className = active
+            ? 'plan-btn min-h-[36px] px-2 rounded-lg border border-zinc-500 bg-zinc-800 text-ink text-[11px] font-semibold transition active:scale-[0.98] truncate'
+            : 'plan-btn min-h-[36px] px-2 rounded-lg border border-border bg-bg text-muted hover:text-ink text-[11px] font-medium transition active:scale-[0.98] truncate';
+        });
+
+        const showB2B = !record.lowEnergy && shouldShowBackToBackTip(dateObj, effectivePlan);
+        els.backToBackTip.classList.toggle('hidden', !showB2B);
+
+        const tasks = buildTasksForDay(effectivePlan, record.gout, record.lowEnergy);
+        els.tasksSectionTitle.textContent = record.lowEnergy ? '5-Min Floor Tasks' : `${dayLabel}'s Plan`;
+
+        let doneCount = 0;
+        tasks.forEach((t) => {
+          if (record.completedTasks[t.id]) doneCount++;
+        });
+        els.tasksProgressBadge.textContent = `${doneCount}/${tasks.length}`;
+
+        els.tasksList.innerHTML = '';
+        tasks.forEach((task) => {
+          const isDone = Boolean(record.completedTasks[task.id]);
+          const isExpanded = expandedTaskIds.has(task.id);
+
+          const wrapper = document.createElement('div');
+          wrapper.className = `rounded-lg border transition-colors ${
+            isDone ? 'bg-bg/60 border-border/60' : 'bg-bg border-border'
+          }`;
+
+          const row = document.createElement('div');
+          row.className = 'flex items-center gap-2.5 p-2.5';
+
+          // Checkbox button (large comfortable tap target)
+          const checkBtn = document.createElement('button');
+          checkBtn.type = 'button';
+          checkBtn.setAttribute('aria-label', `Mark ${task.title} complete`);
+          checkBtn.className = `w-7 h-7 shrink-0 rounded-md border flex items-center justify-center transition active:scale-90 ${
+            isDone
+              ? 'bg-ink border-ink text-bg'
+              : 'bg-card border-zinc-600 text-transparent hover:border-zinc-400'
+          }`;
+          checkBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`;
+          checkBtn.addEventListener('click', () => {
+            record.completedTasks[task.id] = !isDone;
+            saveState(appState);
+            renderAll();
+          });
+
+          // Title & Meta (clickable to toggle details)
+          const textBtn = document.createElement('button');
+          textBtn.type = 'button';
+          textBtn.className = 'flex-1 text-left min-w-0 py-0.5';
+          textBtn.innerHTML = `
+            <div class="text-sm font-medium leading-snug ${isDone ? 'line-through text-zinc-500' : 'text-ink'}">${task.title}</div>
+            <div class="text-[11px] text-muted mt-0.5">${task.meta}</div>
+          `;
+          textBtn.addEventListener('click', () => {
+            if (expandedTaskIds.has(task.id)) expandedTaskIds.delete(task.id);
+            else expandedTaskIds.add(task.id);
+            renderAll();
+          });
+
+          // Expand Chevron
+          const chevBtn = document.createElement('button');
+          chevBtn.type = 'button';
+          chevBtn.setAttribute('aria-label', 'Toggle exercise details');
+          chevBtn.className = 'w-8 h-8 shrink-0 rounded-md flex items-center justify-center text-zinc-500 hover:text-ink transition';
+          chevBtn.innerHTML = `<svg class="w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>`;
+          chevBtn.addEventListener('click', () => {
+            if (expandedTaskIds.has(task.id)) expandedTaskIds.delete(task.id);
+            else expandedTaskIds.add(task.id);
+            renderAll();
+          });
+
+          row.appendChild(checkBtn);
+          row.appendChild(textBtn);
+          row.appendChild(chevBtn);
+          wrapper.appendChild(row);
+
+          if (isExpanded && task.details && task.details.length > 0) {
+            const detailBox = document.createElement('div');
+            detailBox.className = 'px-3 pb-3 pt-1 border-t border-border/60 text-xs text-muted space-y-1.5 leading-relaxed';
+            task.details.forEach((line) => {
+              const p = document.createElement('p');
+              p.className = 'flex items-start gap-2';
+              p.innerHTML = `<span class="text-zinc-600 select-none">•</span><span>${line}</span>`;
+              detailBox.appendChild(p);
+            });
+            wrapper.appendChild(detailBox);
+          }
+
+          els.tasksList.appendChild(wrapper);
+        });
+
+        // 4B. What's Next? (Recovery & Sequencing Guide)
+        const guideKey = record.lowEnergy ? 'low_energy' : effectivePlan;
+        const guide = NEXT_PLAN_GUIDE[guideKey] || NEXT_PLAN_GUIDE.rest;
+        els.nextPlanCurrentLabel.textContent = record.lowEnergy
+          ? '5-Min Floor'
+          : (PLAN_META[effectivePlan] ? PLAN_META[effectivePlan].label : 'Today');
+        els.nextPlanRecommended.textContent = guide.bestNext;
+        els.nextPlanRecommended.className = `font-semibold ${guide.recClass}`;
+        els.nextPlanToneBadge.textContent = guide.badgeText;
+        els.nextPlanToneBadge.className = `text-[10px] font-mono font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0 ${guide.badgeClass}`;
+        els.nextPlanGuidance.textContent = guide.guidance;
+
+        els.toggleCheatSheetBtn.textContent = cheatSheetOpen ? 'Hide Rules' : 'All Rules';
+        els.toggleCheatSheetBtn.setAttribute('aria-expanded', String(cheatSheetOpen));
+        els.sequencingCheatSheet.classList.toggle('hidden', !cheatSheetOpen);
+
+        if (cheatSheetOpen) {
+          els.sequencingCheatSheet.innerHTML = '';
+          ['gym', 'strength_a', 'strength_b', 'prehab', 'rest'].forEach((planKey) => {
+            const meta = PLAN_META[planKey];
+            const rule = NEXT_PLAN_GUIDE[planKey];
+            const isCurrent = !record.lowEnergy && planKey === effectivePlan;
+
+            const item = document.createElement('div');
+            item.className = `rounded-lg p-2.5 border text-xs space-y-1 ${
+              isCurrent ? 'bg-zinc-800/70 border-zinc-600' : 'bg-bg border-border'
+            }`;
+            item.innerHTML = `
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-semibold text-ink">After ${meta.label}</span>
+                <span class="text-[10px] font-mono font-semibold uppercase px-1.5 py-0.5 rounded shrink-0 ${rule.badgeClass}">${rule.badgeText}</span>
+              </div>
+              <div class="text-[11px] font-medium ${rule.recClass}">Next: ${rule.bestNext}</div>
+              <p class="text-[11px] text-muted leading-snug">${rule.guidance}</p>
+            `;
+            els.sequencingCheatSheet.appendChild(item);
+          });
+        }
+
+        // 5. Hydration Bar
+        const waterLiters = (record.waterMl / 1000).toFixed(2);
+        const waterPct = Math.min(100, Math.round((record.waterMl / 3000) * 100));
+        els.waterReadout.textContent = `${waterLiters} / 3.00 L`;
+        els.waterProgressBar.style.width = `${waterPct}%`;
+        els.waterProgressBar.className = `h-full transition-all duration-300 rounded-full ${
+          record.waterMl >= 3000 ? 'bg-emerald-500' : 'bg-zinc-200'
+        }`;
+
+        // 6. Guilt-Free Completion Button
+        const isLogged = appState.loggedDates.includes(dateKey);
+        const dayText = dayOffset === 0 ? 'today' : dayLabel;
+        if (isLogged) {
+          els.logDayBtn.textContent = `Logged for ${dayText} ✓`;
+          els.logDayBtn.className = 'w-full min-h-[50px] rounded-xl border border-emerald-500/40 bg-emerald-500/15 text-emerald-300 font-semibold text-sm flex items-center justify-center gap-2 transition active:scale-[0.99]';
+          els.logDayHint.textContent = 'Shown up and counted. Tap again if you need to undo.';
+        } else {
+          els.logDayBtn.textContent = dayOffset === 0 ? 'Log Today Complete' : `Log ${dayLabel} Complete`;
+          els.logDayBtn.className = 'w-full min-h-[50px] rounded-xl border border-zinc-200 bg-ink text-bg font-semibold text-sm flex items-center justify-center gap-2 hover:bg-zinc-200 transition active:scale-[0.99]';
+          els.logDayHint.textContent = 'No streaks. Every day you show up counts forever.';
+        }
+      }
+
+      // Event Listeners for Main UI
+      els.prevDayBtn.addEventListener('click', () => {
+        dayOffset -= 1;
+        renderAll();
+      });
+
+      els.nextDayBtn.addEventListener('click', () => {
+        dayOffset += 1;
+        renderAll();
+      });
+
+      els.resetTodayBtn.addEventListener('click', () => {
+        dayOffset = 0;
+        renderAll();
+      });
+
+      els.goutBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const dateKey = formatDateKey(getActiveDateObj());
+          const record = getDayRecord(dateKey);
+          record.gout = btn.getAttribute('data-gout');
+          saveState(appState);
+          renderAll();
+        });
+      });
+
+      els.lowEnergyToggle.addEventListener('click', () => {
+        const dateKey = formatDateKey(getActiveDateObj());
+        const record = getDayRecord(dateKey);
+        record.lowEnergy = !record.lowEnergy;
+        saveState(appState);
+        renderAll();
+      });
+
+      els.planBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const dateObj = getActiveDateObj();
+          const dateKey = formatDateKey(dateObj);
+          const record = getDayRecord(dateKey);
+          record.planOverride = btn.getAttribute('data-plan');
+          // Keep loggedPlanType synced if today is already logged
+          if (appState.loggedDates.includes(dateKey)) {
+            record.loggedPlanType = resolveEffectivePlan(dateObj.getDay(), record);
+          }
+          saveState(appState);
+          renderAll();
+        });
+      });
+
+      els.resetPlanAutoBtn.addEventListener('click', () => {
+        const dateObj = getActiveDateObj();
+        const dateKey = formatDateKey(dateObj);
+        const record = getDayRecord(dateKey);
+        record.planOverride = 'auto';
+        if (appState.loggedDates.includes(dateKey)) {
+          record.loggedPlanType = resolveEffectivePlan(dateObj.getDay(), record);
+        }
+        saveState(appState);
+        renderAll();
+      });
+
+      els.toggleCheatSheetBtn.addEventListener('click', () => {
+        cheatSheetOpen = !cheatSheetOpen;
+        renderAll();
+      });
+
+      els.sub250Btn.addEventListener('click', () => {
+        const dateKey = formatDateKey(getActiveDateObj());
+        const record = getDayRecord(dateKey);
+        record.waterMl = Math.max(0, record.waterMl - 250);
+        saveState(appState);
+        renderAll();
+      });
+
+      els.add250Btn.addEventListener('click', () => {
+        const dateKey = formatDateKey(getActiveDateObj());
+        const record = getDayRecord(dateKey);
+        record.waterMl += 250;
+        saveState(appState);
+        renderAll();
+      });
+
+      els.add500Btn.addEventListener('click', () => {
+        const dateKey = formatDateKey(getActiveDateObj());
+        const record = getDayRecord(dateKey);
+        record.waterMl += 500;
+        saveState(appState);
+        renderAll();
+      });
+
+      els.waterResetBtn.addEventListener('click', () => {
+        const dateKey = formatDateKey(getActiveDateObj());
+        const record = getDayRecord(dateKey);
+        record.waterMl = 0;
+        saveState(appState);
+        renderAll();
+      });
+
+      els.logDayBtn.addEventListener('click', () => {
+        const dateObj = getActiveDateObj();
+        const dateKey = formatDateKey(dateObj);
+        const record = getDayRecord(dateKey);
+        const idx = appState.loggedDates.indexOf(dateKey);
+        if (idx === -1) {
+          appState.loggedDates.push(dateKey);
+          record.loggedPlanType = resolveEffectivePlan(dateObj.getDay(), record);
+        } else {
+          appState.loggedDates.splice(idx, 1);
+          record.loggedPlanType = null;
+        }
+        saveState(appState);
+        renderAll();
+      });
+
+      // =========================================================================
+      // 5. WEB AUDIO API SYNTHESIZER + VIBRATION FALLBACK
+      // =========================================================================
+      let audioCtx = null;
+
+      function ensureAudioContext() {
+        try {
+          if (!audioCtx) {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (Ctx) audioCtx = new Ctx();
+          }
+          if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+        } catch (err) {
+          // Ignore audio initialization failures
+        }
+      }
+
+      function playTone(freq, durationMs, type = 'sine', volume = 0.2) {
+        if (!appState.soundEnabled) return;
+        ensureAudioContext();
+        if (!audioCtx) return;
+
+        try {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+          gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(volume, audioCtx.currentTime + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + durationMs / 1000);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + durationMs / 1000 + 0.02);
+        } catch (err) {
+          // Ignore playback errors
+        }
+      }
+
+      function triggerCue(cueType) {
+        if (cueType === 'tick') {
+          playTone(540, 80, 'triangle', 0.16);
+          if (navigator.vibrate) navigator.vibrate(25);
+        } else if (cueType === 'hang') {
+          playTone(880, 260, 'sine', 0.25);
+          if (navigator.vibrate) navigator.vibrate(90);
+        } else if (cueType === 'rest') {
+          playTone(440, 180, 'sine', 0.18);
+          if (navigator.vibrate) navigator.vibrate(50);
+        } else if (cueType === 'done') {
+          playTone(660, 160, 'sine', 0.22);
+          setTimeout(() => playTone(880, 320, 'sine', 0.24), 170);
+          if (navigator.vibrate) navigator.vibrate([80, 60, 140]);
+        }
+      }
+
+      // =========================================================================
+      // 6. 20MM EDGE & REST TIMER ENGINE (Delta-accurate)
+      // =========================================================================
+      const PRESETS = {
+        hang10: {
+          name: '10s Hang',
+          buildSequence: () => [
+            { phase: 'PREP', seconds: 3, roundText: '' },
+            { phase: 'HANG', seconds: 10, roundText: '' }
+          ]
+        },
+        rep73: {
+          name: '7:3 × 6',
+          buildSequence: () => {
+            const seq = [{ phase: 'PREP', seconds: 3, roundText: 'Get Ready' }];
+            for (let r = 1; r <= 6; r++) {
+              seq.push({ phase: 'HANG', seconds: 7, roundText: `Round ${r}/6` });
+              if (r < 6) {
+                seq.push({ phase: 'REST', seconds: 3, roundText: `Round ${r}/6` });
+              }
+            }
+            return seq;
+          }
+        },
+        rest180: {
+          name: '3m Rest',
+          buildSequence: () => [{ phase: 'REST', seconds: 180, roundText: '' }]
+        },
+        stretch60: {
+          name: '60s Stretch',
+          buildSequence: () => [{ phase: 'STRETCH', seconds: 60, roundText: 'Hold' }]
+        }
+      };
+
+      const timerEls = {
+        presetTag: document.getElementById('timerPresetTag'),
+        phaseBadge: document.getElementById('timerPhaseBadge'),
+        roundText: document.getElementById('timerRoundText'),
+        display: document.getElementById('timerDisplay'),
+        progressBar: document.getElementById('timerProgressBar'),
+        jumpToRestBtn: document.getElementById('jumpToRestBtn'),
+        startPauseBtn: document.getElementById('timerStartPauseBtn'),
+        resetBtn: document.getElementById('timerResetBtn'),
+        presetBtns: document.querySelectorAll('.preset-btn'),
+        soundToggleBtn: document.getElementById('soundToggleBtn'),
+        soundIcon: document.getElementById('soundIcon'),
+        soundLabel: document.getElementById('soundLabel')
+      };
+
+      const timer = {
+        presetKey: 'hang10',
+        sequence: PRESETS.hang10.buildSequence(),
+        stepIndex: 0,
+        status: 'READY', // READY | RUNNING | PAUSED | DONE
+        remainingMs: 10000,
+        stepTotalMs: 10000,
+        lastTickTime: null,
+        lastBeepSecond: null,
+        rafId: null
+      };
+
+      function formatClock(ms) {
+        const totalSec = Math.ceil(Math.max(0, ms) / 1000);
+        const mins = Math.floor(totalSec / 60);
+        const secs = totalSec % 60;
+        return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      }
+
+      function selectPreset(key) {
+        stopTimerLoop();
+        timer.presetKey = key;
+        timer.sequence = PRESETS[key].buildSequence();
+        timer.stepIndex = 0;
+        timer.status = 'READY';
+        timer.lastBeepSecond = null;
+
+        // Show primary work duration while READY (e.g., 00:10 for 10s Hang, 00:07 for 7:3)
+        const previewStep = timer.sequence.find((s) => s.phase !== 'PREP') || timer.sequence[0];
+        timer.remainingMs = previewStep.seconds * 1000;
+        timer.stepTotalMs = previewStep.seconds * 1000;
+
+        renderTimer();
+      }
+
+      function stopTimerLoop() {
+        if (timer.rafId) {
+          cancelAnimationFrame(timer.rafId);
+          timer.rafId = null;
+        }
+      }
+
+      function startTimer() {
+        ensureAudioContext();
+        if (timer.status === 'READY' || timer.status === 'DONE') {
+          timer.sequence = PRESETS[timer.presetKey].buildSequence();
+          timer.stepIndex = 0;
+          const first = timer.sequence[0];
+          timer.remainingMs = first.seconds * 1000;
+          timer.stepTotalMs = first.seconds * 1000;
+          timer.lastBeepSecond = first.seconds;
+
+          if (first.phase === 'PREP') triggerCue('tick');
+          else if (first.phase === 'HANG') triggerCue('hang');
+        }
+
+        timer.status = 'RUNNING';
+        timer.lastTickTime = performance.now();
+        renderTimer();
+        timer.rafId = requestAnimationFrame(tickTimer);
+      }
+
+      function pauseTimer() {
+        stopTimerLoop();
+        timer.status = 'PAUSED';
+        renderTimer();
+      }
+
+      function tickTimer(now) {
+        if (timer.status !== 'RUNNING') return;
+
+        const delta = now - timer.lastTickTime;
+        timer.lastTickTime = now;
+        timer.remainingMs -= delta;
+
+        const currentStep = timer.sequence[timer.stepIndex];
+        const secLeft = Math.ceil(timer.remainingMs / 1000);
+
+        // Prep countdown ticks (3, 2, 1)
+        if (currentStep.phase === 'PREP' && secLeft > 0 && secLeft <= 3 && secLeft !== timer.lastBeepSecond) {
+          timer.lastBeepSecond = secLeft;
+          triggerCue('tick');
+        }
+
+        if (timer.remainingMs <= 0) {
+          // Advance to next phase
+          timer.stepIndex += 1;
+          if (timer.stepIndex >= timer.sequence.length) {
+            timer.remainingMs = 0;
+            timer.status = 'DONE';
+            stopTimerLoop();
+            triggerCue('done');
+            renderTimer();
+            return;
+          } else {
+            const nextStep = timer.sequence[timer.stepIndex];
+            timer.remainingMs = nextStep.seconds * 1000;
+            timer.stepTotalMs = nextStep.seconds * 1000;
+            timer.lastBeepSecond = nextStep.seconds;
+
+            if (nextStep.phase === 'HANG') triggerCue('hang');
+            else if (nextStep.phase === 'REST') triggerCue('rest');
+          }
+        }
+
+        renderTimer();
+        timer.rafId = requestAnimationFrame(tickTimer);
+      }
+
+      function renderTimer() {
+        const preset = PRESETS[timer.presetKey];
+        timerEls.presetTag.textContent = preset.name;
+        timerEls.display.textContent = formatClock(timer.remainingMs);
+
+        // Phase label & semantic badge color
+        let phaseLabel = 'READY';
+        let badgeStyle = 'bg-zinc-800 text-muted';
+        let barStyle = 'bg-zinc-200';
+        let roundLabel = '';
+
+        if (timer.status === 'DONE') {
+          phaseLabel = 'DONE';
+          badgeStyle = 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+          barStyle = 'bg-emerald-500';
+        } else if (timer.status === 'RUNNING' || timer.status === 'PAUSED') {
+          const step = timer.sequence[timer.stepIndex];
+          phaseLabel = step.phase;
+          roundLabel = step.roundText || '';
+
+          if (step.phase === 'PREP') {
+            badgeStyle = 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
+            barStyle = 'bg-amber-500';
+          } else if (step.phase === 'HANG') {
+            badgeStyle = 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+            barStyle = 'bg-emerald-500';
+          } else if (step.phase === 'STRETCH') {
+            badgeStyle = 'bg-sky-500/20 text-sky-300 border border-sky-500/30';
+            barStyle = 'bg-sky-400';
+          } else {
+            badgeStyle = 'bg-zinc-800 text-zinc-300 border border-zinc-700';
+            barStyle = 'bg-zinc-300';
+          }
+        }
+
+        timerEls.phaseBadge.textContent = phaseLabel;
+        timerEls.phaseBadge.className = `text-[11px] font-mono font-semibold uppercase tracking-widest px-2 py-0.5 rounded ${badgeStyle}`;
+
+        if (roundLabel) {
+          timerEls.roundText.textContent = roundLabel;
+          timerEls.roundText.classList.remove('hidden');
+        } else {
+          timerEls.roundText.classList.add('hidden');
+        }
+
+        // Show 1-tap jump to 3m Rest when 10s Hang finishes
+        const showJumpRest = timer.status === 'DONE' && timer.presetKey === 'hang10';
+        timerEls.jumpToRestBtn.classList.toggle('hidden', !showJumpRest);
+
+        const pct = timer.status === 'DONE'
+          ? 0
+          : timer.status === 'READY'
+            ? 100
+            : Math.max(0, Math.min(100, (timer.remainingMs / timer.stepTotalMs) * 100));
+
+        timerEls.progressBar.style.width = `${pct}%`;
+        timerEls.progressBar.className = `h-full transition-all duration-75 rounded-full ${barStyle}`;
+
+        // Start / Pause button text
+        if (timer.status === 'RUNNING') {
+          timerEls.startPauseBtn.textContent = 'Pause';
+        } else if (timer.status === 'PAUSED') {
+          timerEls.startPauseBtn.textContent = 'Resume';
+        } else {
+          timerEls.startPauseBtn.textContent = 'Start';
+        }
+
+        // Preset buttons active highlight
+        timerEls.presetBtns.forEach((btn) => {
+          const active = btn.getAttribute('data-preset') === timer.presetKey;
+          btn.className = active
+            ? 'preset-btn min-h-[38px] rounded-lg border border-zinc-500 bg-zinc-800 text-ink text-xs font-mono font-semibold transition active:scale-[0.97]'
+            : 'preset-btn min-h-[38px] rounded-lg border border-border bg-bg text-muted hover:text-ink text-xs font-mono font-medium transition active:scale-[0.97]';
+        });
+
+        // Sound toggle UI
+        timerEls.soundIcon.textContent = appState.soundEnabled ? '🔊' : '🔇';
+        timerEls.soundLabel.textContent = appState.soundEnabled ? 'Sound ON' : 'Sound OFF';
+      }
+
+      timerEls.presetBtns.forEach((btn) => {
+        btn.addEventListener('click', () => selectPreset(btn.getAttribute('data-preset')));
+      });
+
+      timerEls.startPauseBtn.addEventListener('click', () => {
+        if (timer.status === 'RUNNING') pauseTimer();
+        else startTimer();
+      });
+
+      timerEls.resetBtn.addEventListener('click', () => {
+        selectPreset(timer.presetKey);
+      });
+
+      timerEls.jumpToRestBtn.addEventListener('click', () => {
+        selectPreset('rest180');
+        startTimer();
+      });
+
+      timerEls.soundToggleBtn.addEventListener('click', () => {
+        appState.soundEnabled = !appState.soundEnabled;
+        saveState(appState);
+        renderTimer();
+      });
+
+      // =========================================================================
+      // 7. SETTINGS & IOS PWA INSTALL MODAL
+      // =========================================================================
+      function setModalTab(tabName) {
+        const isSchedule = tabName === 'schedule';
+        els.tabSchedulePanel.classList.toggle('hidden', !isSchedule);
+        els.tabInstallPanel.classList.toggle('hidden', isSchedule);
+
+        els.tabScheduleBtn.setAttribute('aria-selected', String(isSchedule));
+        els.tabInstallBtn.setAttribute('aria-selected', String(!isSchedule));
+
+        els.tabScheduleBtn.className = isSchedule
+          ? 'min-h-[36px] rounded-md text-xs font-semibold bg-zinc-800 text-ink border border-zinc-600/80 transition'
+          : 'min-h-[36px] rounded-md text-xs font-medium text-muted hover:text-ink border border-transparent transition';
+
+        els.tabInstallBtn.className = !isSchedule
+          ? 'min-h-[36px] rounded-md text-xs font-semibold bg-zinc-800 text-ink border border-zinc-600/80 transition'
+          : 'min-h-[36px] rounded-md text-xs font-medium text-muted hover:text-ink border border-transparent transition';
+      }
+
+      function renderWeeklyScheduleEditor() {
+        const orderedDays = [
+          { idx: 1, name: 'Monday' },
+          { idx: 2, name: 'Tuesday' },
+          { idx: 3, name: 'Wednesday' },
+          { idx: 4, name: 'Thursday' },
+          { idx: 5, name: 'Friday' },
+          { idx: 6, name: 'Saturday' },
+          { idx: 0, name: 'Sunday' }
+        ];
+
+        els.weeklyScheduleList.innerHTML = '';
+        orderedDays.forEach(({ idx, name }) => {
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-bg border border-border';
+
+          const label = document.createElement('label');
+          label.className = 'text-xs font-medium text-ink';
+          label.textContent = name;
+          label.setAttribute('for', `sched-day-${idx}`);
+
+          const select = document.createElement('select');
+          select.id = `sched-day-${idx}`;
+          select.className = 'bg-card border border-border rounded-md px-2.5 py-1.5 text-xs text-ink focus:outline-none focus:border-zinc-500';
+
+          Object.entries(PLAN_META).forEach(([planKey, meta]) => {
+            const opt = document.createElement('option');
+            opt.value = planKey;
+            opt.textContent = meta.label;
+            if (appState.weeklySchedule[idx] === planKey) opt.selected = true;
+            select.appendChild(opt);
+          });
+
+          select.addEventListener('change', (e) => {
+            appState.weeklySchedule[idx] = e.target.value;
+            saveState(appState);
+            els.scheduleSaveFeedback.textContent = 'Saved';
+            setTimeout(() => {
+              if (els.scheduleSaveFeedback.textContent === 'Saved') {
+                els.scheduleSaveFeedback.textContent = '';
+              }
+            }, 1500);
+            renderAll();
+          });
+
+          row.appendChild(label);
+          row.appendChild(select);
+          els.weeklyScheduleList.appendChild(row);
+        });
+      }
+
+      function openHelpModal() {
+        els.manifestFeedback.textContent = '';
+        els.scheduleSaveFeedback.textContent = '';
+        renderWeeklyScheduleEditor();
+        setModalTab('schedule');
+        els.helpModal.classList.remove('hidden');
+        els.helpModal.classList.add('flex');
+      }
+
+      function closeHelpModal() {
+        els.helpModal.classList.add('hidden');
+        els.helpModal.classList.remove('flex');
+      }
+
+      els.openHelpBtn.addEventListener('click', openHelpModal);
+      els.closeHelpBtn.addEventListener('click', closeHelpModal);
+      els.tabScheduleBtn.addEventListener('click', () => setModalTab('schedule'));
+      els.tabInstallBtn.addEventListener('click', () => setModalTab('install'));
+
+      els.resetWeeklyDefaultsBtn.addEventListener('click', () => {
+        appState.weeklySchedule = { ...DEFAULT_WEEKLY_SCHEDULE };
+        saveState(appState);
+        renderWeeklyScheduleEditor();
+        els.scheduleSaveFeedback.textContent = 'Defaults restored';
+        renderAll();
+      });
+
+      els.helpModal.addEventListener('click', (e) => {
+        if (e.target === els.helpModal) closeHelpModal();
+      });
+
+      els.copyManifestBtn.addEventListener('click', () => {
+        // Use execCommand('copy') for reliable iFrame and mobile Safari support
+        const textarea = document.createElement('textarea');
+        textarea.value = STANDALONE_MANIFEST;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        let ok = false;
+        try {
+          ok = document.execCommand('copy');
+        } catch (err) {
+          ok = false;
+        }
+        document.body.removeChild(textarea);
+        els.manifestFeedback.textContent = ok
+          ? 'Copied manifest.json to clipboard.'
+          : 'Could not copy automatically — use Download .json instead.';
+      });
+
+      els.downloadManifestBtn.addEventListener('click', () => {
+        try {
+          const blob = new Blob([STANDALONE_MANIFEST], { type: 'application/manifest+json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'manifest.json';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          els.manifestFeedback.textContent = 'Downloaded manifest.json.';
+        } catch (err) {
+          els.manifestFeedback.textContent = 'Download blocked in preview — use Copy manifest.json.';
+        }
+      });
+
+      // =========================================================================
+      // 8. INITIALIZE APP
+      // =========================================================================
+      renderAll();
+      selectPreset('hang10');
+    })();
+  </script>
+</body>
+</html>
