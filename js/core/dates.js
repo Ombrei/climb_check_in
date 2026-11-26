@@ -23,9 +23,7 @@ export function formatDisplayDate(dateObj) {
   return `${MONTH_NAMES[dateObj.getMonth()]} ${dateObj.getDate()}, ${dateObj.getFullYear()}`;
 }
 
-export function shouldShowBackToBackTip(state, activeDateObj, activePlanType) {
-  if (!PLAN_META[activePlanType] || !PLAN_META[activePlanType].highIntensity) return false;
-
+export function wasYesterdayHighIntensity(state, activeDateObj) {
   const prevDate = new Date(activeDateObj.getTime());
   prevDate.setDate(prevDate.getDate() - 1);
   const prevKey = formatDateKey(prevDate);
@@ -40,4 +38,9 @@ export function shouldShowBackToBackTip(state, activeDateObj, activePlanType) {
       : resolveEffectivePlan(state, prevDate.getDay(), prevRecord || { planOverride: 'auto' });
 
   return Boolean(PLAN_META[prevPlan] && PLAN_META[prevPlan].highIntensity);
+}
+
+export function shouldShowBackToBackTip(state, activeDateObj, activePlanType) {
+  if (!PLAN_META[activePlanType] || !PLAN_META[activePlanType].highIntensity) return false;
+  return wasYesterdayHighIntensity(state, activeDateObj);
 }

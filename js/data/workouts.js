@@ -1,4 +1,151 @@
-// Flexible daily workout generator adapted for Gout Traffic Light & Low-Energy Mode
+// Flexible daily workout generator adapted for Gout Traffic Light, Low-Energy Mode & Optional Bodybuilding Visits
+
+export function recommendBodybuildingProgram({ gout, hadHighIntensityYesterday }) {
+  if (gout === 'red') {
+    return {
+      programKey: 'upper_push',
+      reason:
+        'Active toe flare: stick to seated Upper Push machines only (zero standing or lower-body load) — or skip the gym and elevate your foot.'
+    };
+  }
+
+  if (hadHighIntensityYesterday) {
+    if (gout === 'yellow') {
+      return {
+        programKey: 'upper_push',
+        reason:
+          'Yesterday taxed your fingers and your big toe is Yellow — seated Upper Push balances climbing pull muscles while resting both pulleys and your toe.'
+      };
+    }
+    return {
+      programKey: 'lower_body',
+      reason:
+        'Yesterday was a high-intensity climbing/finger session — hit Lower Body & Posterior Chain today (or Upper Push) so finger pulleys get a full 48h to recover.'
+    };
+  }
+
+  return {
+    programKey: 'upper_push',
+    reason:
+      'Best default for climbers: builds chest, shoulders, and triceps to balance climbing pulling with zero finger fatigue. Pick Full Body instead if you only lift 1×/week and want legs + back too.'
+  };
+}
+
+function buildBodybuildingPlanTask(programKey, gout) {
+  switch (programKey) {
+    case 'full_body':
+      if (gout === 'red') {
+        return {
+          id: 'plan_bodybuilding',
+          title: 'Bodybuilding Gym — Full Body (Seated Upper Mod)',
+          meta: '35–45 min · Red Flare Safe',
+          details: [
+            'Active flare: Skip all standing lifts and lower-body loading. Seated machines only (or rest at home).',
+            'Incline Dumbbell / Machine Chest Press: 3×10 (2m rest).',
+            'Chest-Supported Row Machine: 3×10–12 (2m rest; light grip to save fingers).',
+            'Seated Shoulder Press Machine: 3×10 (90s rest).',
+            'Seated Cable Face Pulls (or Rear Delt Fly Machine): 3×15 (60s rest).'
+          ]
+        };
+      }
+      if (gout === 'yellow') {
+        return {
+          id: 'plan_bodybuilding',
+          title: 'Bodybuilding Gym — Full Body (Yellow Toe Mod)',
+          meta: '50–60 min · Seated Legs · Balanced',
+          details: [
+            'Incline Dumbbell Press: 3×8–10 (2m rest) — antagonist chest & shoulder stability.',
+            'Chest-Supported Row: 3×10–12 (2m rest) — mid-back thickness; use open grip/straps if fingers feel fatigued.',
+            'Seated Hamstring Curl + Leg Extension: 3×12 each (90s rest) — swaps out standing leg lifts to keep zero load on big toe.',
+            'Seated Dumbbell Overhead Press: 3×8–10 (2m rest).',
+            'Cable Face Pulls: 3×15 + Hammer Curls: 2×12–15 (elbow prehab & posture).'
+          ]
+        };
+      }
+      return {
+        id: 'plan_bodybuilding',
+        title: 'Bodybuilding Gym — Full-Body Climber Hypertrophy',
+        meta: '55–65 min · Balanced Strength & Physique',
+        details: [
+          'Incline Dumbbell Press: 3×8–10 (2m rest) — balances climbing pulling.',
+          'Chest-Supported Row: 3×10–12 (2m rest) — upper-back strength without frying your lower back.',
+          'Romanian Deadlift (RDL) or Heel-Driven Leg Press: 3×8–10 (2–3m rest) — anchor weight in heels/midfoot (skip lunges & calf raises).',
+          'Seated Dumbbell Overhead Press: 3×8–10 (2m rest) — overhead & mantle stability.',
+          'Cable Face Pulls: 3×15 (90s rest) — rear delts & rotator cuff armor.',
+          'Hammer Curls (or Reverse Curls): 2×12–15 (60s rest) — brachialis & elbow tendon prehab.'
+        ]
+      };
+
+    case 'lower_body':
+      if (gout === 'red') {
+        return {
+          id: 'plan_bodybuilding',
+          title: 'SKIP LOWER BODY: Active Toe Flare',
+          meta: 'Flare Protocol · Switch to Upper Push or Rest',
+          details: [
+            'Do not load your feet or legs during an active gout flare.',
+            'Switch to Seated Upper Push above, or skip the gym, elevate your foot, and focus on 3.0L+ hydration.'
+          ]
+        };
+      }
+      if (gout === 'yellow') {
+        return {
+          id: 'plan_bodybuilding',
+          title: 'Bodybuilding Gym — Lower Body (Seated Machines Only)',
+          meta: '40–50 min · Zero Toe Pressure',
+          details: [
+            'Seated Hamstring Curl Machine: 3×12–15 (90s rest) — direct heel-hook strength with zero foot pressure.',
+            'Leg Extension Machine: 3×12–15 (90s rest) — quad volume with pad on shins, zero big-toe bend.',
+            'Hip Abduction & Adduction Machines: 3×15 each (60s rest) — climbing turnout & knee stability.',
+            'Seated Ab Crunch Machine (or Floor Hollow Holds): 3×12–15 (60s rest).',
+            'Skip RDLs, Leg Press, lunges, and calf raises until your toe is Green.'
+          ]
+        };
+      }
+      return {
+        id: 'plan_bodybuilding',
+        title: 'Bodybuilding Gym — Lower Body & Posterior Chain',
+        meta: '45–55 min · Heel-Hook & Leg Power',
+        details: [
+          'Leg Press (Feet High & Wide): 3×10–12 (2m rest) — drive strictly through heels/midfoot.',
+          'Seated Hamstring Curl Machine: 3×12–15 (90s rest) — builds bulletproof heel-hook power.',
+          'Romanian Deadlift (DB or Barbell): 3×8–10 (2–3m rest) — flat feet, hinge at hips, zero toe push-off.',
+          'Hip Abduction / Adduction Machine: 3×15 (60s rest) — hip stability for high steps & drop knees.',
+          'Core: Hanging Knee Raises or Ab Crunch Machine 3×12–15 (60s rest). Avoid lunges and standing calf raises.'
+        ]
+      };
+
+    case 'upper_push':
+    default:
+      if (gout === 'red') {
+        return {
+          id: 'plan_bodybuilding',
+          title: 'Bodybuilding Gym — Upper Push (Seated Only Mod)',
+          meta: '35–45 min · Red Flare Safe',
+          details: [
+            'Active flare: Stay seated on benches/machines with feet resting flat (no standing cables). Skip gym if walking hurts.',
+            'Incline Dumbbell / Machine Chest Press: 3×8–10 (2m rest).',
+            'Seated Dumbbell Overhead Press: 3×8–10 (2m rest).',
+            'Seated Rear Delt Fly Machine (or Seated Face Pulls): 3×15 (60s rest).',
+            'Seated Overhead Tricep Extension (or Machine Dip): 3×10–12 + Seated Lateral Raises: 3×12–15.'
+          ]
+        };
+      }
+      return {
+        id: 'plan_bodybuilding',
+        title: 'Bodybuilding Gym — Upper Push & Antagonists',
+        meta: '45–55 min · Climber Recommended · Zero Finger Fatigue',
+        details: [
+          'Incline Dumbbell Press: 3×8–10 (2m rest) — upper chest & pushing balance for climbing.',
+          'Seated Dumbbell Overhead Press: 3×8–10 (2m rest) — shoulder strength for mantles & press moves.',
+          'Cable Face Pulls: 3×15 (90s rest) — rear delts & external rotation to counter climber posture.',
+          'Dips (Assisted/Weighted) or Cable Tricep Pushdowns: 3×10–12 (90s rest) — lock-out & top-out power.',
+          'Lateral Raises (Cable or DB): 3×12–15 (60s rest) — shoulder cap & joint armor.',
+          'Core Finisher — Cable Pallof Press: 3×12/side (60s rest) — anti-rotation core tension for steep walls.'
+        ]
+      };
+  }
+}
 
 function buildDailySupplementsTask(gout) {
   return {
@@ -59,8 +206,11 @@ function buildLowEnergyTasks(gout) {
   ];
 }
 
-function buildPrimaryPlanTask(planType, gout) {
+function buildPrimaryPlanTask(planType, gout, bodybuildingProgram = 'upper_push') {
   switch (planType) {
+    case 'bodybuilding':
+      return buildBodybuildingPlanTask(bodybuildingProgram, gout);
+
     case 'strength_a':
       return {
         id: 'plan_strength_a',
@@ -219,13 +369,13 @@ function buildDailyMobilityTask(gout) {
   };
 }
 
-export function buildTasksForDay(planType, gout, lowEnergy) {
+export function buildTasksForDay(planType, gout, lowEnergy, bodybuildingProgram = 'upper_push') {
   if (lowEnergy) {
     return buildLowEnergyTasks(gout);
   }
 
   return [
-    buildPrimaryPlanTask(planType, gout),
+    buildPrimaryPlanTask(planType, gout, bodybuildingProgram),
     buildDailySupplementsTask(gout),
     buildDailyFootTask(gout),
     buildDailyMobilityTask(gout)

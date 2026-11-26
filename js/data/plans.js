@@ -20,14 +20,36 @@ export const ORDERED_WEEKDAYS = [
 ];
 
 export const PLAN_META = {
-  gym: { short: 'Gym', label: 'Climbing Gym', highIntensity: true },
-  strength_a: { short: 'Str A', label: 'Home Strength A', highIntensity: true },
-  strength_b: { short: 'Str B', label: 'Home Strength B', highIntensity: true },
-  prehab: { short: 'Prehab', label: 'Prehab & Antagonists', highIntensity: false },
-  rest: { short: 'Rest', label: 'Rest & Mobility', highIntensity: false }
+  gym: { short: 'Gym', label: 'Climbing Gym', highIntensity: true, optional: false },
+  strength_a: { short: 'Str A', label: 'Home Strength A', highIntensity: true, optional: false },
+  strength_b: { short: 'Str B', label: 'Home Strength B', highIntensity: true, optional: false },
+  prehab: { short: 'Prehab', label: 'Prehab & Antagonists', highIntensity: false, optional: false },
+  rest: { short: 'Rest', label: 'Rest & Mobility', highIntensity: false, optional: false },
+  bodybuilding: { short: 'Weights', label: 'Bodybuilding Gym', highIntensity: false, optional: true }
 };
 
-export const SEQUENCING_PLAN_ORDER = ['gym', 'strength_a', 'strength_b', 'prehab', 'rest'];
+export const BODYBUILDING_PROGRAMS = {
+  upper_push: {
+    key: 'upper_push',
+    short: 'Upper Push',
+    label: 'Upper Push & Antagonists',
+    tagline: 'Chest, shoulders, triceps & posture — zero finger fatigue'
+  },
+  full_body: {
+    key: 'full_body',
+    short: 'Full Body',
+    label: 'Full-Body Climber Hypertrophy',
+    tagline: 'Balanced push, pull & legs for occasional 1×/week gym visits'
+  },
+  lower_body: {
+    key: 'lower_body',
+    short: 'Lower Body',
+    label: 'Lower Body & Posterior Chain',
+    tagline: 'Glutes, hamstrings & core while fingers and upper back recover'
+  }
+};
+
+export const SEQUENCING_PLAN_ORDER = ['gym', 'strength_a', 'strength_b', 'bodybuilding', 'prehab', 'rest'];
 
 // Recovery & sequencing rules: what to do the day after each plan
 export const NEXT_PLAN_GUIDE = {
@@ -70,6 +92,14 @@ export const NEXT_PLAN_GUIDE = {
     recClass: 'text-emerald-400',
     guidance:
       'You are fully primed for hard climbing or home strength tomorrow (as long as your big toe check-in is Green or Yellow).'
+  },
+  bodybuilding: {
+    bestNext: 'Climbing Gym, Strength A/B, or Rest',
+    badgeText: 'Fingers Fresh',
+    badgeClass: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+    recClass: 'text-emerald-400',
+    guidance:
+      'Optional weights visits spare your finger pulleys. After Upper Push or Lower Body, you are Green Light to climb or hang tomorrow (expect mild chest/leg soreness). After Full Body heavy rows, give your back 24h before max pull-ups.'
   },
   low_energy: {
     bestNext: 'Any Plan (Gym, Strength, or Prehab)',

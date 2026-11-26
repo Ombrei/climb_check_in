@@ -1,5 +1,6 @@
 // Main dashboard rendering and event bindings
 import {
+  BODYBUILDING_PROGRAMS,
   DEFAULT_WEEKLY_SCHEDULE,
   GOUT_CONFIG,
   NEXT_PLAN_GUIDE,
@@ -7,13 +8,14 @@ import {
   SEQUENCING_PLAN_ORDER,
   WATER_GOAL_ML
 } from '../data/plans.js';
-import { buildTasksForDay } from '../data/workouts.js';
+import { buildTasksForDay, recommendBodybuildingProgram } from '../data/workouts.js';
 import {
   DAY_NAMES,
   formatDateKey,
   formatDisplayDate,
   getDateWithOffset,
-  shouldShowBackToBackTip
+  shouldShowBackToBackTip,
+  wasYesterdayHighIntensity
 } from '../core/dates.js';
 import { getDayRecord, resolveEffectivePlan, saveState } from '../core/storage.js';
 import { createCheckSvg, createChevronSvg } from './dom.js';
@@ -173,17 +175,64 @@ export function createMainView({ els, appState }) {
     els.planSwitcherWrap.classList.toggle('hidden', record.lowEnergy);
 
     els.planBtns.forEach((btn) => {
-      const active = btn.getAttribute('data-plan') === (record.planOverride || 'auto');
+      const planKey = btn.getAttribute('data-plan');
+      const active = planKey === (record.planOverride || 'auto');
       btn.setAttribute('aria-checked', String(active));
-      btn.className = active
-        ? 'plan-btn min-h-[36px] px-2 rounded-lg border border-zinc-500 bg-zinc-800 text-ink text-[11px] font-semibold transition active:scale-[0.98] truncate'
-        : 'plan-btn min-h-[36px] px-2 rounded-lg border border-border bg-bg text-muted hover:text-ink text-[11px] font-medium transition active:scale-[0.98] truncate';
+
+      if (planKey === 'bodybuilding') {
+        btn.className = active
+          ? 'plan-btn mt-1.5 w-full min-h-[38px] px-3 rounded-lg border border-zinc-400 bg-zinc-800 text-ink text-[11px] font-semibold flex items-center justify-between gap-2 transition active:scale-[0.99]'
+          : 'plan-btn mt-1.5 w-full min-h-[38px] px-3 rounded-lg border border-dashed border-border bg-bg text-muted hover:text-ink hover:border-zinc-600 text-[11px] font-medium flex items-center justify-between gap-2 transition active:scale-[0.99]';
+      } else {
+        btn.className = active
+          ? 'plan-btn min-h-[36px] px-2 rounded-lg border border-zinc-500 bg-zinc-800 text-ink text-[11px] font-semibold transition active:scale-[0.98] truncate'
+          : 'plan-btn min-h-[36px] px-2 rounded-lg border border-border bg-bg text-muted hover:text-ink text-[11px] font-medium transition active:scale-[0.98] truncate';
+      }
     });
+
+    const isBodybuilding = effectivePlan === 'bodybuilding';
+    const hadHighIntensityYesterday = wasYesterdayHighIntensity(appState, dateObj);
+    const bbRec = recommendBodybuildingProgram({ gout: record.gout, hadHighIntensityYesterday });
+    const activeBbProgram =
+      record.bodybuildingProgram && BODYBUILDING_PROGRAMS[record.bodybuildingProgram]
+        ? record.bodybuildingProgram
+        : bbRec.programKey;
+
+    els.bodybuildingProgramBox.classList.toggle('hidden', !isBodybuilding);
+    if (isBodybuilding) {
+      const recMeta = BODYBUILDING_PROGRAMS[bbRec.programKey] || BODYBUILDING_PROGRAMS.upper_push;
+      els.bbRecProgramName.textContent = recMeta.label;
+      els.bbRecReason.textContent = bbRec.reason;
+
+      els.bbProgramBtns.forEach((btn) => {
+        const key = btn.getAttribute('data-bb-program');
+        const progMeta = BODYBUILDING_PROGRAMS[key];
+        const isActive = key === activeBbProgram;
+        const isRecommended = key === bbRec.programKey;
+
+        btn.setAttribute('aria-checked', String(isActive));
+        btn.className = isActive
+          ? 'bb-program-btn min-h-[38px] px-2 py-1.5 rounded-lg border border-zinc-400 bg-zinc-800 text-ink text-[11px] font-semibold flex flex-col items-center justify-center leading-tight transition active:scale-[0.98]'
+          : 'bb-program-btn min-h-[38px] px-2 py-1.5 rounded-lg border border-border bg-card text-muted hover:text-ink hover:border-zinc-600 text-[11px] font-medium flex flex-col items-center justify-center leading-tight transition active:scale-[0.98]';
+
+        btn.innerHTML = '';
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = progMeta ? progMeta.short : key;
+        btn.appendChild(nameSpan);
+
+        if (isRecommended) {
+          const recSpan = document.createElement('span');
+          recSpan.className = 'text-[9px] font-mono uppercase tracking-wider text-emerald-400 mt-0.5';
+          recSpan.textContent = '★ Rec';
+          btn.appendChild(recSpan);
+        }
+      });
+    }
 
     const showB2B = !record.lowEnergy && shouldShowBackToBackTip(appState, dateObj, effectivePlan);
     els.backToBackTip.classList.toggle('hidden', !showB2B);
 
-    const tasks = buildTasksForDay(effectivePlan, record.gout, record.lowEnergy);
+    const tasks = buildTasksForDay(effectivePlan, record.gout, record.lowEnergy, activeBbProgram);
     els.tasksSectionTitle.textContent = record.lowEnergy ? '5-Min Floor Tasks' : `${dayLabel}'s Plan`;
 
     const doneCount = tasks.reduce((count, t) => count + (record.completedTasks[t.id] ? 1 : 0), 0);
@@ -345,6 +394,15 @@ export function createMainView({ els, appState }) {
 
     els.planBtns.forEach((btn) => {
       btn.addEventListener('click', () => updatePlanOverride(btn.getAttribute('data-plan')));
+    });
+
+    els.bbProgramBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const { record } = getActiveContext();
+        record.bodybuildingProgram = btn.getAttribute('data-bb-program');
+        saveState(appState);
+        render();
+      });
     });
 
     els.resetPlanAutoBtn.addEventListener('click', () => updatePlanOverride('auto'));

@@ -83,13 +83,15 @@ export function createSettingsModal({ els, appState, onScheduleUpdated }) {
       select.className =
         'bg-card border border-border rounded-md px-2.5 py-1.5 text-xs text-ink focus:outline-none focus:border-zinc-500';
 
-      Object.entries(PLAN_META).forEach(([planKey, meta]) => {
-        const opt = document.createElement('option');
-        opt.value = planKey;
-        opt.textContent = meta.label;
-        if (appState.weeklySchedule[idx] === planKey) opt.selected = true;
-        select.appendChild(opt);
-      });
+      Object.entries(PLAN_META)
+        .filter(([, meta]) => !meta.optional)
+        .forEach(([planKey, meta]) => {
+          const opt = document.createElement('option');
+          opt.value = planKey;
+          opt.textContent = meta.label;
+          if (appState.weeklySchedule[idx] === planKey) opt.selected = true;
+          select.appendChild(opt);
+        });
 
       select.addEventListener('change', (e) => {
         appState.weeklySchedule[idx] = e.target.value;

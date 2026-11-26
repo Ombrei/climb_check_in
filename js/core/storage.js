@@ -50,6 +50,7 @@ export function getDayRecord(state, dateKey) {
       gout: 'green',
       lowEnergy: false,
       planOverride: 'auto',
+      bodybuildingProgram: null, // null = automatically use recommended program
       loggedPlanType: null,
       completedTasks: {},
       waterMl: 0
@@ -57,6 +58,9 @@ export function getDayRecord(state, dateKey) {
   } else {
     // Forward-compatibility with previously saved records
     if (!state.days[dateKey].planOverride) state.days[dateKey].planOverride = 'auto';
+    if (typeof state.days[dateKey].bodybuildingProgram === 'undefined') {
+      state.days[dateKey].bodybuildingProgram = null;
+    }
     if (typeof state.days[dateKey].loggedPlanType === 'undefined') state.days[dateKey].loggedPlanType = null;
     if (!state.days[dateKey].completedTasks) state.days[dateKey].completedTasks = {};
   }
