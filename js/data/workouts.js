@@ -1,6 +1,23 @@
 // Flexible daily workout generator adapted for Gout Traffic Light & Low-Energy Mode
 
+function buildDailySupplementsTask(gout) {
+  return {
+    id: 'daily_supplements',
+    title: 'Daily Supplements — Prebiotics & Creatine',
+    meta: '1 min · Take with water',
+    details: [
+      'Prebiotics: Take your daily serving with water or alongside a meal.',
+      'Creatine (3–5g): Take daily for consistent strength saturation—timing is flexible, consistency matters most.',
+      gout === 'red'
+        ? 'Active flare reminder: Pair with plenty of water toward your 3.0L+ gout flush goal.'
+        : 'Wash down with 250–500ml water and log it in the Hydration tracker below.'
+    ]
+  };
+}
+
 function buildLowEnergyTasks(gout) {
+  const supplements = buildDailySupplementsTask(gout);
+
   if (gout === 'red') {
     return [
       {
@@ -9,6 +26,7 @@ function buildLowEnergyTasks(gout) {
         meta: 'Gout flush · 1 min',
         details: ['Sip a full 500ml glass right now to dilute uric acid and keep joints hydrated.']
       },
+      supplements,
       {
         id: 'le_glides',
         title: 'Seated tendon glides (1 min)',
@@ -36,7 +54,8 @@ function buildLowEnergyTasks(gout) {
       title: 'Drink 500ml water',
       meta: 'Hydration · 1 min',
       details: ['Hit your hydration baseline and call it a win.']
-    }
+    },
+    supplements
   ];
 }
 
@@ -207,6 +226,7 @@ export function buildTasksForDay(planType, gout, lowEnergy) {
 
   return [
     buildPrimaryPlanTask(planType, gout),
+    buildDailySupplementsTask(gout),
     buildDailyFootTask(gout),
     buildDailyMobilityTask(gout)
   ];
