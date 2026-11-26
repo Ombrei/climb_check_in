@@ -73,16 +73,18 @@ export function getDomRefs() {
     logDayBtn: byId('logDayBtn'),
     logDayHint: byId('logDayHint'),
 
-    // Settings, Exercise Guide & Install modal
+    // Settings, Exercise Guide, AI Setup & Install modal
     openHelpBtn: byId('openHelpBtn'),
     closeHelpBtn: byId('closeHelpBtn'),
     helpModal: byId('helpModal'),
     helpModalScrollArea: byId('helpModalScrollArea'),
     tabScheduleBtn: byId('tabScheduleBtn'),
     tabExercisesBtn: byId('tabExercisesBtn'),
+    tabAiBtn: byId('tabAiBtn'),
     tabInstallBtn: byId('tabInstallBtn'),
     tabSchedulePanel: byId('tabSchedulePanel'),
     tabExercisesPanel: byId('tabExercisesPanel'),
+    tabAiPanel: byId('tabAiPanel'),
     tabInstallPanel: byId('tabInstallPanel'),
     exerciseSearchInput: byId('exerciseSearchInput'),
     clearExerciseSearchBtn: byId('clearExerciseSearchBtn'),
@@ -93,9 +95,33 @@ export function getDomRefs() {
     weeklyScheduleList: byId('weeklyScheduleList'),
     resetWeeklyDefaultsBtn: byId('resetWeeklyDefaultsBtn'),
     scheduleSaveFeedback: byId('scheduleSaveFeedback'),
+    aiConfigStatusBadge: byId('aiConfigStatusBadge'),
+    geminiApiKeyInput: byId('geminiApiKeyInput'),
+    toggleGeminiKeyVisBtn: byId('toggleGeminiKeyVisBtn'),
+    geminiModelSelect: byId('geminiModelSelect'),
+    saveGeminiKeyBtn: byId('saveGeminiKeyBtn'),
+    testGeminiKeyBtn: byId('testGeminiKeyBtn'),
+    clearGeminiKeyBtn: byId('clearGeminiKeyBtn'),
+    geminiSettingsFeedback: byId('geminiSettingsFeedback'),
     copyManifestBtn: byId('copyManifestBtn'),
     downloadManifestBtn: byId('downloadManifestBtn'),
-    manifestFeedback: byId('manifestFeedback')
+    manifestFeedback: byId('manifestFeedback'),
+
+    // AI Climbing Coach chat modal
+    openChatBtn: byId('openChatBtn'),
+    chatKeyStatusDot: byId('chatKeyStatusDot'),
+    chatModal: byId('chatModal'),
+    closeChatBtn: byId('closeChatBtn'),
+    chatContextPill: byId('chatContextPill'),
+    chatClearBtn: byId('chatClearBtn'),
+    chatSettingsBtn: byId('chatSettingsBtn'),
+    chatSetupBanner: byId('chatSetupBanner'),
+    chatSetupKeyBtn: byId('chatSetupKeyBtn'),
+    chatMessages: byId('chatMessages'),
+    chatQuickPrompts: byId('chatQuickPrompts'),
+    chatForm: byId('chatForm'),
+    chatInput: byId('chatInput'),
+    chatSendBtn: byId('chatSendBtn')
   };
 }
 

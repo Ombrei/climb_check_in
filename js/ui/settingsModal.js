@@ -1,7 +1,14 @@
-// Settings, Exercise How-To Guide, and iOS PWA Install modal
+// Settings, Exercise How-To Guide, Gemini AI Setup, and iOS PWA Install modal
 import { DEFAULT_WEEKLY_SCHEDULE, ORDERED_WEEKDAYS, PLAN_META } from '../data/plans.js';
 import { EXERCISE_CATEGORIES, EXERCISE_GUIDE } from '../data/exercises.js';
 import { saveState } from '../core/storage.js';
+import {
+  clearGeminiKey,
+  GEMINI_MODELS,
+  loadGeminiConfig,
+  saveGeminiConfig,
+  testGeminiKey
+} from '../core/gemini.js';
 import { createChevronSvg } from './dom.js';
 
 const FALLBACK_MANIFEST_JSON = JSON.stringify(
@@ -39,7 +46,7 @@ async function getManifestText() {
   return FALLBACK_MANIFEST_JSON;
 }
 
-export function createSettingsModal({ els, appState, onScheduleUpdated }) {
+export function createSettingsModal({ els, appState, onScheduleUpdated, onAiConfigUpdated }) {
   let activeExerciseCategory = 'all';
   let exerciseSearchQuery = '';
   const expandedExerciseIds = new Set();
@@ -48,6 +55,7 @@ export function createSettingsModal({ els, appState, onScheduleUpdated }) {
     const tabs = [
       { key: 'schedule', btn: els.tabScheduleBtn, panel: els.tabSchedulePanel },
       { key: 'exercises', btn: els.tabExercisesBtn, panel: els.tabExercisesPanel },
+      { key: 'ai', btn: els.tabAiBtn, panel: els.tabAiPanel },
       { key: 'install', btn: els.tabInstallBtn, panel: els.tabInstallPanel }
     ];
 
@@ -56,8 +64,8 @@ export function createSettingsModal({ els, appState, onScheduleUpdated }) {
       panel.classList.toggle('hidden', !active);
       btn.setAttribute('aria-selected', String(active));
       btn.className = active
-        ? 'min-h-[36px] rounded-md text-xs font-semibold bg-zinc-800 text-ink border border-zinc-600/80 transition'
-        : 'min-h-[36px] rounded-md text-xs font-medium text-muted hover:text-ink border border-transparent transition';
+        ? 'min-h-[36px] rounded-md text-[11px] font-semibold bg-zinc-800 text-ink border border-zinc-600/80 transition'
+        : 'min-h-[36px] rounded-md text-[11px] font-medium text-muted hover:text-ink border border-transparent transition';
     });
 
     if (els.helpModalScrollArea) {
@@ -278,13 +286,49 @@ export function createSettingsModal({ els, appState, onScheduleUpdated }) {
     });
   }
 
+  // ---- Tab 3: Gemini AI Coach Setup ----
+  function setGeminiFeedback(text, tone = 'emerald') {
+    els.geminiSettingsFeedback.textContent = text;
+    if (tone === 'rose') {
+      els.geminiSettingsFeedback.className = 'text-[11px] min-h-[16px] text-center text-rose-400';
+    } else if (tone === 'muted') {
+      els.geminiSettingsFeedback.className = 'text-[11px] min-h-[16px] text-center text-muted';
+    } else {
+      els.geminiSettingsFeedback.className = 'text-[11px] min-h-[16px] text-center text-emerald-400';
+    }
+  }
+
+  function renderAiSettings() {
+    const config = loadGeminiConfig();
+    els.geminiApiKeyInput.value = config.apiKey;
+    els.geminiApiKeyInput.type = 'password';
+    els.toggleGeminiKeyVisBtn.textContent = 'Show';
+
+    els.geminiModelSelect.innerHTML = '';
+    GEMINI_MODELS.forEach((m) => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.label;
+      if (m.id === config.model) opt.selected = true;
+      els.geminiModelSelect.appendChild(opt);
+    });
+
+    const connected = Boolean(config.apiKey);
+    els.aiConfigStatusBadge.textContent = connected ? 'Key Saved' : 'Not Connected';
+    els.aiConfigStatusBadge.className = connected
+      ? 'text-[10px] font-mono font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+      : 'text-[10px] font-mono font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700';
+  }
+
   // ---- Modal Open / Close & Event Listeners ----
   function open(initialTab = 'schedule') {
     els.manifestFeedback.textContent = '';
     els.scheduleSaveFeedback.textContent = '';
+    setGeminiFeedback('', 'muted');
     renderWeeklyScheduleEditor();
     renderExerciseCategoryFilters();
     renderExerciseGuide();
+    renderAiSettings();
     setModalTab(initialTab);
     els.helpModal.classList.remove('hidden');
     els.helpModal.classList.add('flex');
@@ -300,7 +344,61 @@ export function createSettingsModal({ els, appState, onScheduleUpdated }) {
     els.closeHelpBtn.addEventListener('click', close);
     els.tabScheduleBtn.addEventListener('click', () => setModalTab('schedule'));
     els.tabExercisesBtn.addEventListener('click', () => setModalTab('exercises'));
+    els.tabAiBtn.addEventListener('click', () => setModalTab('ai'));
     els.tabInstallBtn.addEventListener('click', () => setModalTab('install'));
+
+    els.toggleGeminiKeyVisBtn.addEventListener('click', () => {
+      const hidden = els.geminiApiKeyInput.type === 'password';
+      els.geminiApiKeyInput.type = hidden ? 'text' : 'password';
+      els.toggleGeminiKeyVisBtn.textContent = hidden ? 'Hide' : 'Show';
+    });
+
+    els.saveGeminiKeyBtn.addEventListener('click', () => {
+      const key = els.geminiApiKeyInput.value.trim();
+      const model = els.geminiModelSelect.value;
+      saveGeminiConfig({ apiKey: key, model });
+      renderAiSettings();
+      setGeminiFeedback(key ? 'Saved locally on this device.' : 'Saved model (no API key set).', key ? 'emerald' : 'muted');
+      if (typeof onAiConfigUpdated === 'function') onAiConfigUpdated();
+    });
+
+    els.geminiModelSelect.addEventListener('change', () => {
+      const current = loadGeminiConfig();
+      saveGeminiConfig({ apiKey: els.geminiApiKeyInput.value.trim() || current.apiKey, model: els.geminiModelSelect.value });
+      setGeminiFeedback('Model updated.', 'emerald');
+      if (typeof onAiConfigUpdated === 'function') onAiConfigUpdated();
+    });
+
+    els.testGeminiKeyBtn.addEventListener('click', async () => {
+      const key = els.geminiApiKeyInput.value.trim();
+      const model = els.geminiModelSelect.value;
+      if (!key) {
+        setGeminiFeedback('Paste a Gemini API key first.', 'rose');
+        return;
+      }
+
+      saveGeminiConfig({ apiKey: key, model });
+      renderAiSettings();
+      if (typeof onAiConfigUpdated === 'function') onAiConfigUpdated();
+
+      els.testGeminiKeyBtn.disabled = true;
+      setGeminiFeedback('Testing connection to Gemini...', 'muted');
+      try {
+        await testGeminiKey({ apiKey: key, model });
+        setGeminiFeedback('Connected! Your AI Coach is ready.', 'emerald');
+      } catch (err) {
+        setGeminiFeedback(err && err.message ? err.message : 'Connection test failed.', 'rose');
+      } finally {
+        els.testGeminiKeyBtn.disabled = false;
+      }
+    });
+
+    els.clearGeminiKeyBtn.addEventListener('click', () => {
+      clearGeminiKey();
+      renderAiSettings();
+      setGeminiFeedback('API key removed from this device.', 'muted');
+      if (typeof onAiConfigUpdated === 'function') onAiConfigUpdated();
+    });
 
     els.helpModal.addEventListener('click', (e) => {
       if (e.target === els.helpModal) close();

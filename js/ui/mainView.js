@@ -440,5 +440,5 @@ export function createMainView({ els, appState }) {
 
   bindEvents();
 
-  return { render };
+  return { render, getActiveContext };
 }
