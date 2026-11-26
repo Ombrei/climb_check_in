@@ -1,0 +1,37 @@
+/* Safe-area padding for iOS notch and home indicator */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+}
+
+html,
+body {
+  background-color: #0b0b0c;
+  color: #f4f4f5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+body {
+  padding-top: max(16px, var(--sat));
+  padding-bottom: max(28px, var(--sab));
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0b0c;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #242428;
+  border-radius: 9999px;
+}
