@@ -147,23 +147,36 @@ function buildBodybuildingPlanTask(programKey, gout) {
   }
 }
 
-function buildDailySupplementsTask(gout) {
-  return {
-    id: 'daily_supplements',
-    title: 'Daily Supplements — Prebiotics & Creatine',
-    meta: '1 min · Take with water',
-    details: [
-      'Prebiotics: Take your daily serving with water or alongside a meal.',
-      'Creatine (3–5g): Take daily for consistent strength saturation—timing is flexible, consistency matters most.',
-      gout === 'red'
-        ? 'Active flare reminder: Pair with plenty of water toward your 3.0L+ gout flush goal.'
-        : 'Wash down with 250–500ml water and log it in the Hydration tracker below.'
-    ]
-  };
+function buildDailyMedicationSupplementTasks(gout) {
+  return [
+    {
+      id: 'daily_supps_am',
+      title: 'Medications & Supplements — Morning / Afternoon',
+      meta: 'Vit B Complex · Vit C + Zinc + D3 · Pre/Postbiotic',
+      details: [
+        'Vitamin B Complex: Take in the morning or afternoon.',
+        'Ascorbic Acid with Zinc & Vitamin D3: Best taken with a meal for comfortable digestion and D3 absorption.',
+        'Prebiotic / Postbiotic: Take your daily serving with water or alongside a meal.'
+      ]
+    },
+    {
+      id: 'daily_supps_pm',
+      title: 'Medications & Supplements — Evening',
+      meta: 'Colchicine · Febuxostat · Creatine',
+      details: [
+        'Colchicine (1×/day): Take your prescribed evening dose.',
+        'Febuxostat (1×/day): Take once daily at roughly the same time every evening (follow your doctor\'s instructions even during flares).',
+        'Creatine (3–5g): Take daily for consistent strength saturation.',
+        gout === 'red'
+          ? 'Active flare reminder: Follow your doctor\'s flare guidance and pair with plenty of water toward your 3.0L+ gout flush goal.'
+          : 'Wash down with 250–500ml water and log it in the Hydration tracker below.'
+      ]
+    }
+  ];
 }
 
 function buildLowEnergyTasks(gout) {
-  const supplements = buildDailySupplementsTask(gout);
+  const medSupps = buildDailyMedicationSupplementTasks(gout);
 
   if (gout === 'red') {
     return [
@@ -173,7 +186,7 @@ function buildLowEnergyTasks(gout) {
         meta: 'Gout flush · 1 min',
         details: ['Sip a full 500ml glass right now to dilute uric acid and keep joints hydrated.']
       },
-      supplements,
+      ...medSupps,
       {
         id: 'le_glides',
         title: 'Seated tendon glides (1 min)',
@@ -202,7 +215,7 @@ function buildLowEnergyTasks(gout) {
       meta: 'Hydration · 1 min',
       details: ['Hit your hydration baseline and call it a win.']
     },
-    supplements
+    ...medSupps
   ];
 }
 
@@ -376,7 +389,7 @@ export function buildTasksForDay(planType, gout, lowEnergy, bodybuildingProgram 
 
   return [
     buildPrimaryPlanTask(planType, gout, bodybuildingProgram),
-    buildDailySupplementsTask(gout),
+    ...buildDailyMedicationSupplementTasks(gout),
     buildDailyFootTask(gout),
     buildDailyMobilityTask(gout)
   ];

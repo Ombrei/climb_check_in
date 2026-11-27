@@ -242,7 +242,7 @@ export function buildCoachSystemPrompt(appState, ctx) {
     'USER PROFILE & COACHING STYLE:',
     '- Bouldering climber (~V5-V6 level) training with a 20mm hangboard, home pull-up bar, climbing gym, and occasional optional bodybuilding gym visits.',
     '- Has a gout-sensitive big toe: always respect the Big Toe Traffic Light (Green = full plan + downclimb all boulders; Yellow = seated foot work only, overhangs/hooks, zero sharp jibs, no standing leg loads that jam the big toe; Red = active flare, rest & elevate foot, zero foot/lower-body impact, 3.0L+ hydration).',
-    '- Takes daily prebiotics and creatine (3-5g) with plenty of water.',
+    '- Daily medications & supplements: Morning/Afternoon = Vitamin B complex, ascorbic acid with zinc & vitamin D3, prebiotic/postbiotic; Evening = prescribed colchicine (1×/day), febuxostat (1×/day), and creatine (3-5g) with plenty of water.',
     '- ADHD-friendly tone: concise, encouraging, practical, scannable bullet points. Zero guilt, zero streak pressure—every check-in counts.',
     '- Keep answers tight (roughly 80-180 words unless the user asks for a full breakdown).',
     '- Medical safety: give general training/exercise modification advice only; for acute gout flares, severe joint pain, or medication questions, remind the user to follow their doctor\'s guidance.',
