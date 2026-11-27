@@ -4,7 +4,7 @@ import { EXERCISE_CATEGORIES, EXERCISE_GUIDE } from '../data/exercises.js';
 import { saveState } from '../core/storage.js';
 import {
   clearGeminiKey,
-  GEMINI_MODELS,
+  fetchAvailableModels,
   loadGeminiConfig,
   saveGeminiConfig,
   testGeminiKey
@@ -305,7 +305,13 @@ export function createSettingsModal({ els, appState, onScheduleUpdated, onAiConf
     els.toggleGeminiKeyVisBtn.textContent = 'Show';
 
     els.geminiModelSelect.innerHTML = '';
-    GEMINI_MODELS.forEach((m) => {
+    const models = config.models || [];
+    const hasSelected = models.some((m) => m.id === config.model);
+    const listToRender = hasSelected
+      ? models
+      : [{ id: config.model, label: config.model }, ...models];
+
+    listToRender.forEach((m) => {
       const opt = document.createElement('option');
       opt.value = m.id;
       opt.textContent = m.label;
@@ -353,13 +359,53 @@ export function createSettingsModal({ els, appState, onScheduleUpdated, onAiConf
       els.toggleGeminiKeyVisBtn.textContent = hidden ? 'Hide' : 'Show';
     });
 
-    els.saveGeminiKeyBtn.addEventListener('click', () => {
+    els.refreshGeminiModelsBtn.addEventListener('click', async () => {
+      const key = els.geminiApiKeyInput.value.trim();
+      if (!key) {
+        setGeminiFeedback('Paste a Gemini API key first.', 'rose');
+        return;
+      }
+
+      els.refreshGeminiModelsBtn.disabled = true;
+      setGeminiFeedback('Loading available Gemini models...', 'muted');
+      try {
+        const liveModels = await fetchAvailableModels(key);
+        const currentModel = els.geminiModelSelect.value;
+        const chosen = liveModels.some((m) => m.id === currentModel) ? currentModel : liveModels[0].id;
+        saveGeminiConfig({ apiKey: key, model: chosen, models: liveModels });
+        renderAiSettings();
+        setGeminiFeedback(`Loaded ${liveModels.length} live models. Selected ${chosen}.`, 'emerald');
+        if (typeof onAiConfigUpdated === 'function') onAiConfigUpdated();
+      } catch (err) {
+        setGeminiFeedback(err && err.message ? err.message : 'Could not load models.', 'rose');
+      } finally {
+        els.refreshGeminiModelsBtn.disabled = false;
+      }
+    });
+
+    els.saveGeminiKeyBtn.addEventListener('click', async () => {
       const key = els.geminiApiKeyInput.value.trim();
       const model = els.geminiModelSelect.value;
       saveGeminiConfig({ apiKey: key, model });
       renderAiSettings();
-      setGeminiFeedback(key ? 'Saved locally on this device.' : 'Saved model (no API key set).', key ? 'emerald' : 'muted');
       if (typeof onAiConfigUpdated === 'function') onAiConfigUpdated();
+
+      if (!key) {
+        setGeminiFeedback('Saved model (no API key set).', 'muted');
+        return;
+      }
+
+      setGeminiFeedback('Saved! Loading live models for your key...', 'muted');
+      try {
+        const liveModels = await fetchAvailableModels(key);
+        const chosen = liveModels.some((m) => m.id === model) ? model : liveModels[0].id;
+        saveGeminiConfig({ apiKey: key, model: chosen, models: liveModels });
+        renderAiSettings();
+        setGeminiFeedback(`Saved! Ready with ${chosen}.`, 'emerald');
+        if (typeof onAiConfigUpdated === 'function') onAiConfigUpdated();
+      } catch (err) {
+        setGeminiFeedback('Key saved locally (tap Test Key to verify).', 'emerald');
+      }
     });
 
     els.geminiModelSelect.addEventListener('change', () => {
@@ -377,15 +423,18 @@ export function createSettingsModal({ els, appState, onScheduleUpdated, onAiConf
         return;
       }
 
-      saveGeminiConfig({ apiKey: key, model });
-      renderAiSettings();
-      if (typeof onAiConfigUpdated === 'function') onAiConfigUpdated();
-
       els.testGeminiKeyBtn.disabled = true;
-      setGeminiFeedback('Testing connection to Gemini...', 'muted');
+      setGeminiFeedback('Discovering models & testing Gemini...', 'muted');
       try {
-        await testGeminiKey({ apiKey: key, model });
-        setGeminiFeedback('Connected! Your AI Coach is ready.', 'emerald');
+        const result = await testGeminiKey({ apiKey: key, model });
+        renderAiSettings();
+        if (typeof onAiConfigUpdated === 'function') onAiConfigUpdated();
+        setGeminiFeedback(
+          result.autoSwitched
+            ? `Connected! Switched to live model: ${result.modelUsed}.`
+            : `Connected with ${result.modelUsed}! Your AI Coach is ready.`,
+          'emerald'
+        );
       } catch (err) {
         setGeminiFeedback(err && err.message ? err.message : 'Connection test failed.', 'rose');
       } finally {

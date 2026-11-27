@@ -606,12 +606,21 @@
 
           <!-- Model Selector -->
           <div class="space-y-1.5">
-            <label for="geminiModelSelect" class="block text-[11px] font-medium text-ink">Model</label>
+            <div class="flex items-center justify-between gap-2">
+              <label for="geminiModelSelect" class="block text-[11px] font-medium text-ink">Model</label>
+              <button
+                id="refreshGeminiModelsBtn"
+                type="button"
+                class="text-[11px] text-muted hover:text-ink underline underline-offset-2 transition"
+              >
+                Refresh Models
+              </button>
+            </div>
             <select
               id="geminiModelSelect"
               class="w-full h-9 px-2.5 rounded-lg bg-bg border border-border text-xs text-ink focus:outline-none focus:border-zinc-500 transition"
             >
-              <!-- Populated from GEMINI_MODELS -->
+              <!-- Dynamically populated from Google AI Studio / fallback models -->
             </select>
           </div>
 

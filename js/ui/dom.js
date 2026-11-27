@@ -98,6 +98,7 @@ export function getDomRefs() {
     aiConfigStatusBadge: byId('aiConfigStatusBadge'),
     geminiApiKeyInput: byId('geminiApiKeyInput'),
     toggleGeminiKeyVisBtn: byId('toggleGeminiKeyVisBtn'),
+    refreshGeminiModelsBtn: byId('refreshGeminiModelsBtn'),
     geminiModelSelect: byId('geminiModelSelect'),
     saveGeminiKeyBtn: byId('saveGeminiKeyBtn'),
     testGeminiKeyBtn: byId('testGeminiKeyBtn'),
